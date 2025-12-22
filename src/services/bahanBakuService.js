@@ -56,6 +56,18 @@ class BahanBakuService {
       throw error
     }
   }
+  // Link nutrition data to bahan baku
+  async linkNutrition(id, idKomposisiPangan) {
+    try {
+      const response = await apiClient.post(`/bahan-baku/${id}/link-nutrition`, {
+        id_komposisi_pangan: idKomposisiPangan
+      })
+      return response.data
+    } catch (error) {
+      console.error('Error linking nutrition:', error)
+      throw error
+    }
+  }
 }
 
 export default new BahanBakuService()

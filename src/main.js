@@ -1,5 +1,3 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
@@ -12,6 +10,9 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js'
 
 // Import Bootstrap Icons
 import 'bootstrap-icons/font/bootstrap-icons.css'
+
+// Import Custom Global CSS (Must be after Bootstrap)
+import './assets/main.css'
 
 // Import Toastification
 import Toastification from 'vue-toastification'

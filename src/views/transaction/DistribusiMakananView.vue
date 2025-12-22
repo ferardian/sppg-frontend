@@ -6,7 +6,8 @@
         <i class="bi bi-truck me-2"></i>Distribusi Makanan
       </h3>
       <button
-        class="btn btn-primary"
+        class="btn btn-primary btn-lg rounded-pill px-4"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
         @click="showAddForm = true"
         :disabled="loading"
       >
@@ -18,7 +19,7 @@
     <div class="row mb-4">
       <div class="col-md-12">
         <div class="card border-primary">
-          <div class="card-header bg-primary text-white">
+          <div class="card-header text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
             <h6 class="mb-0">
               <i class="bi bi-graph-up me-2"></i>Summary Distribusi Hari Ini
             </h6>
@@ -427,6 +428,97 @@
             </div>
           </div>
 
+          <!-- Calculator Nutrisi -->
+          <div v-if="calculatorData.ingredients.length > 0" class="card mb-3 border-info">
+            <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+              <h6 class="mb-0">
+                <i class="bi bi-calculator me-2"></i>Kalkulator Nutrisi (Berdasarkan Bahan Baku)
+              </h6>
+              <span class="badge bg-light text-dark">
+                {{ calculatorData.ingredients.filter(i => i.included).length }} Bahan Dipilih
+              </span>
+            </div>
+            <div class="card-body p-0">
+              <div class="table-responsive">
+                <table class="table table-sm table-hover mb-0">
+                  <thead class="table-light">
+                    <tr>
+                      <th class="text-center" style="width: 50px">Use</th>
+                      <th class="text-center" style="width: 50px">Link</th>
+                      <th>Bahan Baku</th>
+                      <th class="text-end">Energi (kcal)</th>
+                      <th class="text-end">Protein (g)</th>
+                      <th class="text-end">Lemak (g)</th>
+                      <th class="text-end">KH (g)</th>
+                      <th class="text-end">Serat (g)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr v-for="(bahan, index) in calculatorData.ingredients" :key="index" :class="{'table-active': !bahan.included}">
+                      <td class="text-center">
+                        <div class="form-check d-flex justify-content-center">
+                          <input class="form-check-input" type="checkbox" v-model="bahan.included">
+                        </div>
+                      </td>
+                      <td class="text-center">
+                         <button 
+                            type="button"
+                            class="btn btn-sm p-0 d-flex align-items-center justify-content-center mx-auto" 
+                            :class="bahan.komposisi_pangan ? 'btn-outline-success' : 'btn-outline-secondary'"
+                            style="width: 28px; height: 28px; border-radius: 50%;" 
+                            @click="openSelector(index)" 
+                            :title="bahan.komposisi_pangan ? 'Ganti Data Nutrisi' : 'Cari Data Nutrisi'"
+                        >
+                          <i class="bi" :class="bahan.komposisi_pangan ? 'bi-pencil-fill' : 'bi-search'" style="font-size: 0.8rem;"></i>
+                        </button>
+                      </td>
+                      <td>
+                        <div class="fw-bold">{{ bahan.nama_bahan_baku }}</div>
+                        <div v-if="bahan.komposisi_pangan" class="small text-success d-flex align-items-center mt-1">
+                             <i class="bi bi-link-45deg me-1"></i>
+                             <span class="text-truncate" style="max-width: 200px;">{{ bahan.komposisi_pangan.nama_bahan }}</span>
+                        </div>
+                        <small class="text-muted d-block mt-1" v-else>
+                          <i class="bi bi-exclamation-circle text-warning me-1"></i>Belum terhubung
+                        </small>
+                      </td>
+                      <td class="text-end" :class="{'text-muted': !bahan.included}">
+                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.energi_kal) : '-' }}
+                      </td>
+                      <td class="text-end" :class="{'text-muted': !bahan.included}">
+                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.protein_g) : '-' }}
+                      </td>
+                      <td class="text-end" :class="{'text-muted': !bahan.included}">
+                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.lemak_g) : '-' }}
+                      </td>
+                      <td class="text-end" :class="{'text-muted': !bahan.included}">
+                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.kh_g) : '-' }}
+                      </td>
+                      <td class="text-end" :class="{'text-muted': !bahan.included}">
+                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.serat_g) : '-' }}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot class="table-light fw-bold">
+                    <tr>
+                      <td colspan="3" class="text-end">Total Nilai Gizi:</td>
+                      <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.kalori) }}</td>
+                      <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.protein) }}</td>
+                      <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.lemak) }}</td>
+                      <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.karbohidrat) }}</td>
+                      <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.serat) }}</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+            <div class="card-footer bg-white text-end">
+              <button type="button" class="btn btn-info text-white btn-sm" @click="applyCalculation">
+                <i class="bi bi-arrow-down-circle me-1"></i> Terapkan ke Nilai Gizi Aktual
+              </button>
+            </div>
+          </div>
+
           <!-- Nilai Gizi Aktual -->
           <div class="card mb-3">
             <div class="card-header">
@@ -741,15 +833,28 @@
         </nav>
       </div>
     </div>
+    
+    <!-- Nutrition Selector Modal -->
+    <KomposisiPanganSelectorModal 
+      :isVisible="showSelectorModal" 
+      @close="showSelectorModal = false"
+      @select="handleNutritionSelect"
+    />
   </div>
 </template>
 
 <script>
 import distribusiMakananService from '@/services/distribusiMakananService'
+import menuService from '@/services/menuService'
+import bahanBakuService from '@/services/bahanBakuService'
 import { useToast } from 'vue-toastification'
+import KomposisiPanganSelectorModal from '@/components/KomposisiPanganSelectorModal.vue'
 
 export default {
   name: 'DistribusiMakananView',
+  components: {
+    KomposisiPanganSelectorModal
+  },
   setup() {
     const toast = useToast()
     return { toast }
@@ -762,6 +867,12 @@ export default {
       isEdit: false,
       summaryDate: new Date().toISOString().split('T')[0], // Default to today
       summaryData: null,
+      calculatorData: {
+        ingredients: [],
+        loading: false
+      },
+      showSelectorModal: false,
+      selectedIngredientIndex: null,
       distribusiList: [],
       penerimaList: [],
       menuList: [],
@@ -905,6 +1016,36 @@ export default {
     },
     statusOptions() {
       return distribusiMakananService.getStatusDistribusiOptions()
+    },
+    calculatedTotals() {
+      const totals = {
+        kalori: 0,
+        protein: 0,
+        lemak: 0,
+        karbohidrat: 0,
+        serat: 0
+      }
+
+      this.calculatorData.ingredients.forEach(bahan => {
+        if (bahan.included && bahan.komposisi_pangan) {
+          // Requirement: Ignore weight, use raw values directly
+          totals.kalori += Number(bahan.komposisi_pangan.energi_kal) || 0
+          totals.protein += Number(bahan.komposisi_pangan.protein_g) || 0
+          totals.lemak += Number(bahan.komposisi_pangan.lemak_g) || 0
+          totals.karbohidrat += Number(bahan.komposisi_pangan.kh_g) || 0
+          totals.serat += Number(bahan.komposisi_pangan.serat_g) || 0
+        }
+      })
+
+      const porsi = 1 // Requirement: Do not multiply by portion count
+      
+      return {
+        kalori: totals.kalori * porsi,
+        protein: totals.protein * porsi,
+        lemak: totals.lemak * porsi,
+        karbohidrat: totals.karbohidrat * porsi,
+        serat: totals.serat * porsi
+      }
     }
   },
   watch: {
@@ -1070,6 +1211,12 @@ export default {
         catatan: item.catatan || ''
       }
       console.log('📝 Form data after edit:', this.form)
+      
+      // Load calculator data immediately
+      if (item.id_menu) {
+        this.loadCalculatorData(item.id_menu)
+      }
+      
       this.showAddForm = true
     },
     async confirmDelete(item) {
@@ -1141,6 +1288,40 @@ export default {
     },
     onMenuChange() {
       this.calculateTotalKalori()
+      if (this.form.id_menu) {
+        this.loadCalculatorData(this.form.id_menu)
+      } else {
+        this.calculatorData.ingredients = []
+      }
+    },
+    async loadCalculatorData(menuId) {
+      this.calculatorData.loading = true
+      this.calculatorData.ingredients = [] // Reset ingredients first
+      try {
+        const response = await menuService.getById(menuId)
+        if (response.success && response.data.bahan_baku) {
+          this.calculatorData.ingredients = response.data.bahan_baku.map(bahan => ({
+            ...bahan,
+            included: true, // Default to included
+            // Ensure numeric values for calculation
+            jumlah_bahan: Number(bahan.jumlah_bahan) || 0,
+            komposisi_pangan: bahan.komposisi_pangan ? {
+              ...bahan.komposisi_pangan,
+              energi_kal: Number(bahan.komposisi_pangan.energi_kal) || 0,
+              protein_g: Number(bahan.komposisi_pangan.protein_g) || 0,
+              lemak_g: Number(bahan.komposisi_pangan.lemak_g) || 0,
+              kh_g: Number(bahan.komposisi_pangan.kh_g) || 0,
+              serat_g: Number(bahan.komposisi_pangan.serat_g) || 0
+            } : null
+          }))
+          console.log('Ingredients loaded for calculator:', this.calculatorData.ingredients)
+        }
+      } catch (error) {
+        console.error('Error loading menu details for calculator:', error)
+        this.toast.error('Gagal memuat detail bahan baku')
+      } finally {
+        this.calculatorData.loading = false
+      }
     },
     calculateTotalKalori() {
       // Computed property will handle this
@@ -1164,7 +1345,7 @@ export default {
     },
     formatNumber(num) {
       if (num === null || num === undefined || isNaN(num)) return 0
-      return new Intl.NumberFormat('id-ID').format(Math.round(num))
+      return new Intl.NumberFormat('id-ID', { maximumFractionDigits: 2 }).format(num)
     },
     getWaktuMakanLabel(value) {
       const option = this.waktuMakanOptions.find(opt => opt.value === value)
@@ -1178,6 +1359,15 @@ export default {
       const option = this.statusOptions.find(opt => opt.value === status)
       const color = option ? option.color : 'secondary'
       return `badge bg-${color} text-white`
+    },
+    applyCalculation() {
+      const totals = this.calculatedTotals
+      this.form.kalori_aktual = totals.kalori
+      this.form.protein_aktual = totals.protein
+      this.form.lemak_aktual = totals.lemak
+      this.form.karbohidrat_aktual = totals.karbohidrat
+      this.form.serat_aktual = totals.serat
+      this.toast.success('Hasil perhitungan diterapkan ke formulir')
     },
     hasNutritionalData(giziAktual) {
       return giziAktual && (
@@ -1333,6 +1523,45 @@ export default {
 
       // Return array of menus sorted by total portions descending
       return Object.values(menuStats).sort((a, b) => b.total_porsi - a.total_porsi)
+    },
+    openSelector(index) {
+        this.selectedIngredientIndex = index
+        this.showSelectorModal = true
+    },
+    async handleNutritionSelect(item) {
+        if (this.selectedIngredientIndex !== null && this.calculatorData.ingredients[this.selectedIngredientIndex]) {
+            // Update the ingredient with selected nutrition data
+            const ingredient = this.calculatorData.ingredients[this.selectedIngredientIndex]
+            
+            try {
+              // Call API to persist the link
+              await bahanBakuService.linkNutrition(ingredient.id_bahan_baku, item.id)
+              
+              // Log for debugging
+              console.log('🔗 Linking nutrition data:', item.nama_bahan, 'to ingredient:', ingredient.nama_bahan_baku)
+  
+              // Update reactivity properly
+              ingredient.komposisi_pangan = {
+                  id: item.id,
+                  kode: item.kode,
+                  nama_bahan: item.nama_bahan,
+                  energi_kal: Number(item.energi) || 0,
+                  protein_g: Number(item.protein) || 0,
+                  lemak_g: Number(item.lemak) || 0,
+                  kh_g: Number(item.karbohidrat) || 0,
+                  serat_g: Number(item.serat) || 0,
+                  bdd: Number(item.bdd) || 100
+              }
+              
+              // Force include if it wasn't
+              ingredient.included = true
+              
+              this.toast.success(`Nutrisi "${item.nama_bahan}" terhubung ke "${ingredient.nama_bahan_baku}" dan tersimpan!`)
+            } catch (error) {
+              console.error('Failed to link nutrition:', error)
+              this.toast.error('Gagal menyimpan link nutrisi: ' + (error.response?.data?.message || error.message))
+            }
+        }
     }
   }
 }
@@ -1398,5 +1627,17 @@ export default {
 
 .invalid-feedback {
   display: block;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 </style>

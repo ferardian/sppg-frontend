@@ -116,23 +116,17 @@
             </div>
           </div>
           <div class="card-body">
-            <div class="text-center py-4">
-              <i class="bi bi-graph-up text-muted" style="font-size: 3rem;"></i>
-              <h5 class="mt-3 text-muted">Grafik Distribusi Bulanan</h5>
-              <p class="text-muted">Total distribusi bulan ini: 5.200 porsi</p>
-              <div class="row mt-4">
-                <div class="col-md-4">
-                  <div class="small text-muted">Jan - Mar</div>
-                  <div class="h5">3.200</div>
-                </div>
-                <div class="col-md-4">
-                  <div class="small text-muted">Apr - Jun</div>
-                  <div class="h5">4.000</div>
-                </div>
-                <div class="col-md-4">
-                  <div class="small text-muted">Jul - Sep</div>
-                  <div class="h5 text-success">5.200</div>
-                </div>
+            <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+              <Bar
+                v-if="chartData && chartData.labels"
+                :data="chartData"
+                :options="chartOptions"
+              />
+              <div v-else class="text-center py-5">
+                 <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                 </div>
+                 <p class="text-muted mt-2">Memuat data grafik...</p>
               </div>
             </div>
           </div>
@@ -230,89 +224,53 @@
 <script>
 import { ref, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
+import dashboardService from '@/services/dashboardService'
+import { Bar } from 'vue-chartjs'
+import { Chart as ChartJS, Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale } from 'chart.js'
+
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
 export default {
   name: 'DashboardView',
+  components: {
+    Bar
+  },
   setup() {
     const authStore = useAuthStore()
     const currentTime = ref('')
+    const loading = ref(false)
+    const error = ref(null)
 
-    // Dashboard statistics - using dummy data
+    // Dashboard statistics
     const stats = ref({
-      totalPenerima: 245,
-      totalMenu: 12,
-      stokTersedia: 856,
-      stokPercentage: 85,
-      distribusiHariIni: 156
+      totalPenerima: 0,
+      totalMenu: 0,
+      stokTersedia: 0,
+      stokPercentage: 0, // Not available from API directly, might need calculation or removal
+      distribusiHariIni: 0
     })
 
-    // Recent activities - dummy data
-    const activities = ref([
-      {
-        id: 1,
-        title: 'Distribusi Makanan',
-        description: '150 porsi makanan didistribusikan',
-        time: new Date(Date.now() - 1000 * 60 * 30), // 30 minutes ago
-        icon: 'bi bi-box-seam'
+    const activities = ref([])
+    const recentDistributions = ref([])
+    const chartData = ref(null)
+    
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+           display: false
+        }
       },
-      {
-        id: 2,
-        title: 'Stok Bahan Baku',
-        description: '10 kg beras ditambahkan',
-        time: new Date(Date.now() - 1000 * 60 * 60 * 2), // 2 hours ago
-        icon: 'bi bi-basket'
-      },
-      {
-        id: 3,
-        title: 'Penerima Manfaat Baru',
-        description: '5 penerima manfaat baru didaftarkan',
-        time: new Date(Date.now() - 1000 * 60 * 60 * 4), // 4 hours ago
-        icon: 'bi bi-person-check'
-      },
-      {
-        id: 4,
-        title: 'Update Menu',
-        description: 'Menu makan siang diperbarui',
-        time: new Date(Date.now() - 1000 * 60 * 60 * 8), // 8 hours ago
-        icon: 'bi bi-menu-app'
+      scales: {
+        y: {
+           beginAtZero: true,
+           ticks: {
+              stepSize: 1
+           }
+        }
       }
-    ])
-
-    // Recent distributions - dummy data
-    const recentDistributions = ref([
-      {
-        id: 1001,
-        tanggal: '2024-01-15',
-        penerima: 'Ahmad Wijaya',
-        menu: 'Nasi Goreng + Ayam',
-        jumlah: 1,
-        status: 'completed'
-      },
-      {
-        id: 1002,
-        tanggal: '2024-01-15',
-        penerima: 'Siti Nurhaliza',
-        menu: 'Mie Ayam',
-        jumlah: 1,
-        status: 'completed'
-      },
-      {
-        id: 1003,
-        tanggal: '2024-01-15',
-        penerima: 'Budi Santoso',
-        menu: 'Nasi Padang',
-        jumlah: 2,
-        status: 'in_progress'
-      },
-      {
-        id: 1004,
-        tanggal: '2024-01-14',
-        penerima: 'Dewi Lestari',
-        menu: 'Soto Ayam',
-        jumlah: 1,
-        status: 'completed'
-      }
-    ])
+    }
 
     const updateTime = () => {
       const now = new Date()
@@ -324,6 +282,7 @@ export default {
     }
 
     const formatDate = (dateString) => {
+      if (!dateString) return '-'
       const date = new Date(dateString)
       return date.toLocaleDateString('id-ID', {
         day: 'numeric',
@@ -332,7 +291,9 @@ export default {
       })
     }
 
-    const formatTime = (date) => {
+    const formatTime = (dateInput) => {
+      if (!dateInput) return '-'
+      const date = new Date(dateInput)
       const now = new Date()
       const diff = now - date
       const minutes = Math.floor(diff / 60000)
@@ -344,29 +305,108 @@ export default {
       if (hours < 24) return `${hours} jam lalu`
       return `${days} hari lalu`
     }
+    
+    // Helper for number formatting
+    const formatNumber = (num) => {
+       return new Intl.NumberFormat('id-ID').format(num || 0)
+    }
 
     const getStatusBadgeClass = (status) => {
       const statusClasses = {
         completed: 'badge bg-success',
+        selesai: 'badge bg-success',
         in_progress: 'badge bg-warning',
+        proses: 'badge bg-warning',
         pending: 'badge bg-secondary',
-        cancelled: 'badge bg-danger'
+        menunggu: 'badge bg-secondary',
+        cancelled: 'badge bg-danger',
+        dibatalkan: 'badge bg-danger'
       }
-      return statusClasses[status] || 'badge bg-secondary'
+      return statusClasses[status?.toLowerCase()] || 'badge bg-secondary'
     }
 
     const viewDetail = (item) => {
       console.log('View detail for:', item)
-      // TODO: Implement detail view modal
+    }
+    
+    const fetchDashboardData = async () => {
+      loading.value = true
+      error.value = null
+      try {
+        console.log('Fetching dashboard data...')
+        
+        // Parallel requests for better performance
+        const [statsRes, activitiesRes, distributionsRes, monthlyRes] = await Promise.allSettled([
+          dashboardService.getStatistics(),
+          dashboardService.getRecentActivities(),
+          dashboardService.getRecentDistributions(),
+          dashboardService.getMonthlyDistribution()
+        ])
+        
+        // Handle Statistics
+        if (statsRes.status === 'fulfilled') {
+            const data = statsRes.value.data.data
+            stats.value = {
+                totalPenerima: data.total_penerima || 0,
+                totalMenu: data.total_menu || 0,
+                stokTersedia: data.stok_tersedia || 0,
+                distribusiHariIni: data.distribusi_hari_ini || 0,
+                stokPercentage: 0 // Placeholder
+            }
+        } else {
+             console.error('Failed to load stats:', statsRes.reason)
+        }
+
+        // Handle Activities
+        if (activitiesRes.status === 'fulfilled') {
+            activities.value = activitiesRes.value.data.data.map(act => ({
+                id: act.id,
+                title: act.title || 'Aktivitas',
+                description: act.description || '',
+                time: act.created_at || new Date(),
+                icon: act.icon || 'bi bi-circle'
+            }))
+        }
+
+        if (distributionsRes.status === 'fulfilled') {
+            recentDistributions.value = distributionsRes.value.data.data.map(dist => ({
+                id: dist.id,
+                tanggal: dist.tanggal,
+                penerima: dist.penerima || 'Unknown',
+                menu: dist.menu || 'Unknown',
+                jumlah: dist.jumlah,
+                status: dist.status
+            }))
+        }
+        
+        // Handle Monthly Distribution (Chart)
+        if (monthlyRes.status === 'fulfilled') {
+            const apiData = monthlyRes.value.data.data
+            chartData.value = {
+              labels: apiData.labels,
+              datasets: apiData.datasets.map(ds => ({
+                 ...ds,
+                 backgroundColor: '#667eea', // Use primary purple color
+                 borderRadius: 4
+              }))
+            }
+        }
+
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err)
+        error.value = 'Gagal memuat data dashboard'
+      } finally {
+        loading.value = false
+      }
     }
 
     onMounted(() => {
       console.log('🏠 Dashboard component mounted!')
       updateTime()
       setInterval(updateTime, 1000)
+      fetchDashboardData()
     })
 
-    
     return {
       authStore,
       currentTime,
@@ -375,8 +415,13 @@ export default {
       recentDistributions,
       formatDate,
       formatTime,
+      formatNumber,
       getStatusBadgeClass,
-      viewDetail
+      viewDetail,
+      loading,
+      error,
+      chartData,
+      chartOptions
     }
   }
 }

@@ -1,22 +1,24 @@
 <template>
   <div class="container-fluid py-4">
-    <div class="row">
-      <div class="col-12">
-        <div class="card">
-          <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">
-              <i class="bi bi-people-fill me-2"></i>
-              Manajemen User
-            </h5>
-            <button
-              class="btn btn-light"
-              @click="showAddUserForm"
-            >
-              <i class="bi bi-plus-circle me-1"></i>
-              Tambah User
-            </button>
-          </div>
-          <div class="card-body">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="mb-0 text-dark">
+          <i class="bi bi-people-fill text-primary me-2"></i>
+          Manajemen User
+        </h3>
+        <p class="text-muted mb-0 mt-1">Kelola data pengguna sistem</p>
+      </div>
+      <button
+        v-if="!showAddForm"
+        class="btn btn-primary btn-lg rounded-pill px-4"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
+        @click="showAddUserForm"
+      >
+        <i class="bi bi-plus-circle me-1"></i>
+        Tambah User
+      </button>
+    </div>
             <!-- Add/Edit Form (shown when adding/editing) -->
             <div v-if="showAddForm" class="card mb-4 border-primary">
               <div class="card-header bg-primary text-white">
@@ -209,7 +211,9 @@
             </div>
 
             <!-- Search and Filter -->
-            <div class="row mb-3" v-if="!showAddForm">
+            <div v-if="!showAddForm" class="card border-0 shadow-sm">
+              <div class="card-body">
+                <div class="row mb-3">
               <div class="col-md-6">
                 <div class="input-group">
                   <span class="input-group-text">
@@ -367,8 +371,6 @@
             </nav>
           </div>
         </div>
-      </div>
-    </div>
 
     <!-- Simple Detail Alert (shown when user detail is selected) -->
     <div v-if="selectedUser" class="card mb-4 border-info">
@@ -886,5 +888,17 @@ export default {
 :deep(.modal-content) {
   position: relative;
   z-index: 1060;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  background-color: transparent !important; /* Ensure bg color doesn't override gradient */
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 </style>

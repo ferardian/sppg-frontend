@@ -12,6 +12,7 @@
       <button
         v-if="!showAddForm"
         class="btn btn-primary btn-lg rounded-pill px-4"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
         @click="showAddForm = true"
       >
         <i class="bi bi-plus-circle me-2"></i>
@@ -645,5 +646,17 @@ export default {
     padding: 0.75rem 0.5rem;
     font-size: 0.875rem;
   }
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 </style>

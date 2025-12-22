@@ -33,3 +33,32 @@ a,
     padding: 0 2rem;
   }
 }
+
+/* Global Button Styles - Primary Gradient Override */
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive Button Sizing */
+@media (max-width: 768px) {
+  .btn-lg {
+    padding: 0.375rem 0.75rem !important;
+    /* Standard Bootstrap padding */
+    font-size: 1rem !important;
+    /* Standard font size */
+    border-radius: 0.375rem !important;
+    /* Slightly smaller radius if desired, or keep pill */
+  }
+
+  /* Keep rounded-pill if it was used */
+  .rounded-pill {
+    border-radius: 50rem !important;
+  }
+}

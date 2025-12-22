@@ -1,108 +1,146 @@
 <template>
   <div class="app-container">
     <!-- Sidebar -->
-    <nav class="sidebar d-none d-lg-block">
-      <div class="sidebar-header p-4">
-        <h4 class="text-white mb-0">
+    <nav class="sidebar d-none d-lg-block" 
+         :class="{ 'collapsed': isEffectivelyCollapsed }"
+         @mouseenter="handleSidebarHover(true)"
+         @mouseleave="handleSidebarHover(false)">
+      <div class="sidebar-header p-4 d-flex align-items-center" :class="isEffectivelyCollapsed ? 'justify-content-center' : 'justify-content-between'">
+        <h5 class="text-white mb-0 brand-logo" v-show="!isEffectivelyCollapsed" style="line-height: 1.3; max-width: 200px;">
           <i class="bi bi-egg-fried me-2"></i>
-          SPPG
+          {{ configStore.sppgName }}
+        </h5>
+        <h4 class="text-white mb-0 text-nowrap brand-logo-collapsed" v-show="isEffectivelyCollapsed">
+           <i class="bi bi-egg-fried"></i>
         </h4>
+      </div>
+      
+      <!-- Stylish Toggle Button -->
+      <div class="toggle-container" @click="toggleSidebar" :title="isSidebarCollapsed ? 'Expand' : 'Collapse'">
+         <div class="toggle-icon">
+             <i class="bi" :class="isEffectivelyCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
+         </div>
       </div>
 
       <ul class="nav flex-column">
         <li class="nav-item">
-          <router-link to="/dashboard" class="nav-link" active-class="active">
+          <router-link to="/dashboard" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Dashboard' : ''">
             <i class="bi bi-speedometer2 me-2"></i>
-            Dashboard
+            <span v-show="!isEffectivelyCollapsed">Dashboard</span>
           </router-link>
         </li>
 
         <!-- Master Data -->
-        <li class="nav-item mt-3">
+        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
           <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
             Data Master
           </h6>
         </li>
+        <li class="nav-item" v-show="isEffectivelyCollapsed">
+           <div class="collapsed-divider"></div>
+        </li>
         <li class="nav-item">
-          <router-link to="/master-data/sppg" class="nav-link" active-class="active">
+          <router-link to="/master-data/sppg" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'SPPG' : ''">
             <i class="bi bi-building me-2"></i>
-            SPPG
+            <span v-show="!isEffectivelyCollapsed">SPPG</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/master-data/pegawai" class="nav-link" active-class="active">
+          <router-link to="/master-data/pegawai" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Pegawai' : ''">
             <i class="bi bi-people me-2"></i>
-            Pegawai
+             <span v-show="!isEffectivelyCollapsed">Pegawai</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/master-data/bahan-baku" class="nav-link" active-class="active">
+          <router-link to="/master-data/bahan-baku" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Bahan Baku' : ''">
             <i class="bi bi-basket me-2"></i>
-            Bahan Baku
+             <span v-show="!isEffectivelyCollapsed">Bahan Baku</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/master-data/menu" class="nav-link" active-class="active">
+          <router-link to="/master-data/menu" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Menu' : ''">
             <i class="bi bi-menu-app me-2"></i>
-            Menu
+             <span v-show="!isEffectivelyCollapsed">Menu</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/master-data/supplier" class="nav-link" active-class="active">
+          <router-link to="/master-data/supplier" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Supplier' : ''">
             <i class="bi bi-truck me-2"></i>
-            Supplier
+             <span v-show="!isEffectivelyCollapsed">Supplier</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/master-data/user-management" class="nav-link" active-class="active">
+          <router-link to="/master-data/user-management" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Manajemen User' : ''">
             <i class="bi bi-people-fill me-2"></i>
-            Manajemen User
+             <span v-show="!isEffectivelyCollapsed">Manajemen User</span>
           </router-link>
         </li>
 
         <!-- Transactions -->
-        <li class="nav-item mt-3">
+        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
           <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
             Transaksi
           </h6>
         </li>
+        <li class="nav-item" v-show="isEffectivelyCollapsed">
+           <div class="collapsed-divider"></div>
+        </li>
         <li class="nav-item">
-          <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active">
+          <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Penerima Manfaat' : ''">
             <i class="bi bi-person-check me-2"></i>
-            Penerima Manfaat
+             <span v-show="!isEffectivelyCollapsed">Penerima Manfaat</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/transactions/stok-opname" class="nav-link" active-class="active">
+          <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Stok Opname' : ''">
             <i class="bi bi-clipboard-check me-2"></i>
-            Stok Opname
+             <span v-show="!isEffectivelyCollapsed">Stok Opname</span>
           </router-link>
         </li>
         <li class="nav-item">
-          <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active">
+          <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Distribusi Makanan' : ''">
             <i class="bi bi-box-seam me-2"></i>
-            Distribusi Makanan
+             <span v-show="!isEffectivelyCollapsed">Distribusi Makanan</span>
           </router-link>
         </li>
 
         <!-- Menu Management -->
-        <li class="nav-item mt-3">
+        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
           <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
             Manajemen Menu
           </h6>
         </li>
+        <li class="nav-item" v-show="isEffectivelyCollapsed">
+           <div class="collapsed-divider"></div>
+        </li>
         <li class="nav-item">
-          <router-link to="/management/recipe-management" class="nav-link" active-class="active">
+          <router-link to="/management/recipe-management" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Resep & Kalkulator' : ''">
             <i class="bi bi-journal-text me-2"></i>
-            Resep & Kalkulator
-            <span class="badge bg-success ms-2" style="font-size: 0.6em;">NEW</span>
+             <span v-show="!isEffectivelyCollapsed">Resep & Kalkulator</span>
+            <span class="badge bg-success ms-2" style="font-size: 0.6em;" v-show="!isEffectivelyCollapsed">NEW</span>
+          </router-link>
+        </li>
+
+        <!-- Tools -->
+        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
+          <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
+            Tools
+          </h6>
+        </li>
+        <li class="nav-item" v-show="isEffectivelyCollapsed">
+           <div class="collapsed-divider"></div>
+        </li>
+        <li class="nav-item">
+          <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Komposisi Pangan' : ''">
+            <i class="bi bi-egg-fried me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Komposisi Pangan</span>
           </router-link>
         </li>
       </ul>
     </nav>
 
     <!-- Main Content -->
-    <main class="main-content">
+    <main class="main-content" :class="{ 'collapsed': isEffectivelyCollapsed }">
       <!-- Top Navigation -->
       <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-4">
         <div class="container-fluid">
@@ -176,91 +214,125 @@
 
       <!-- Page Content -->
       <div class="container-fluid p-0">
-        <div class="p-4">
+        <div class="p-4 page-content-wrapper">
           <router-view />
         </div>
       </div>
     </main>
 
     <!-- Mobile Sidebar -->
-    <div class="offcanvas offcanvas-start" tabindex="-1" id="mobileSidebar">
-      <div class="offcanvas-header bg-primary text-white">
-        <h5 class="offcanvas-title">
+    <!-- Added custom-mobile-sidebar class for styling -->
+    <div class="offcanvas offcanvas-start custom-mobile-sidebar" tabindex="-1" id="mobileSidebar" style="z-index: 1050;">
+      <div class="offcanvas-header text-white border-bottom border-white-10 d-flex align-items-center justify-content-between">
+        <h5 class="offcanvas-title brand-logo">
           <i class="bi bi-egg-fried me-2"></i>
-          SPPG
+          {{ configStore.sppgName }}
         </h5>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+        <div class="d-flex align-items-center">
+            <!-- Alternative arrow close button -->
+            <button type="button" class="btn btn-link text-white me-2 p-0" data-bs-dismiss="offcanvas" style="font-size: 1.5rem;">
+                <i class="bi bi-arrow-left-circle"></i>
+            </button>
+            <!-- Standard close button (keep as backup/standard) -->
+            <!-- <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button> -->
+        </div>
       </div>
-      <div class="offcanvas-body">
-        <ul class="nav flex-column">
+      <div class="offcanvas-body p-0">
+        <ul class="nav flex-column mobile-nav-list p-3">
           <li class="nav-item">
-            <router-link to="/dashboard" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/dashboard" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-speedometer2 me-2"></i>
               Dashboard
             </router-link>
           </li>
           <li class="nav-item mt-3">
-            <h6 class="nav-section-title px-3 text-uppercase small text-muted">
+            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
               Data Master
             </h6>
           </li>
           <li class="nav-item">
-            <router-link to="/master-data/sppg" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/master-data/sppg" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-building me-2"></i>
               SPPG
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/master-data/pegawai" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/master-data/pegawai" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-people me-2"></i>
               Pegawai
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/master-data/bahan-baku" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/master-data/bahan-baku" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-basket me-2"></i>
               Bahan Baku
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/master-data/menu" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/master-data/menu" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-menu-app me-2"></i>
               Menu
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/master-data/supplier" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/master-data/supplier" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-truck me-2"></i>
               Supplier
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/master-data/user-management" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/master-data/user-management" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-people-fill me-2"></i>
               Manajemen User
             </router-link>
           </li>
           <li class="nav-item mt-3">
-            <h6 class="nav-section-title px-3 text-uppercase small text-muted">
+            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
               Transaksi
             </h6>
           </li>
           <li class="nav-item">
-            <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-person-check me-2"></i>
               Penerima Manfaat
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-clipboard-check me-2"></i>
               Stok Opname
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" data-bs-dismiss="offcanvas">
+            <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-box-seam me-2"></i>
               Distribusi Makanan
+            </router-link>
+          </li>
+          
+          <!-- Menu Management -->
+          <li class="nav-item mt-3">
+            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
+              Manajemen Menu
+            </h6>
+          </li>
+          <li class="nav-item">
+            <router-link to="/management/recipe-management" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-journal-text me-2"></i>
+              Resep & Kalkulator
+            </router-link>
+          </li>
+
+          <!-- Tools -->
+          <li class="nav-item mt-3">
+            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
+              Tools
+            </h6>
+          </li>
+          <li class="nav-item">
+            <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-egg-fried me-2"></i>
+              Komposisi Pangan
             </router-link>
           </li>
         </ul>
@@ -271,8 +343,10 @@
 
 <script>
 import { useAuthStore } from '@/stores/auth'
+import { useConfigStore } from '@/stores/config'
 import authService from '@/services/authService'
 import { useRouter, useRoute } from 'vue-router'
+import { ref, computed } from 'vue'
 
 export default {
   name: 'LayoutView',
@@ -280,6 +354,27 @@ export default {
     const router = useRouter()
     const route = useRoute()
     const authStore = useAuthStore()
+    
+    const configStore = useConfigStore()
+    
+    // Sidebar collapse state
+    // Default to collapsed as requested
+    const isSidebarCollapsed = ref(true)
+    const isHovered = ref(false)
+    
+    // Sidebar is effectively collapsed only if "locked" collapsed AND not currently hovered
+    const isEffectivelyCollapsed = computed(() => isSidebarCollapsed.value && !isHovered.value)
+
+    const toggleSidebar = () => {
+      isSidebarCollapsed.value = !isSidebarCollapsed.value
+    }
+
+    const handleSidebarHover = (value) => {
+        // Only trigger hover effects on desktop
+        if (window.innerWidth >= 992) {
+            isHovered.value = value
+        }
+    }
 
     const getUserInitials = () => {
       const name = authStore.userName || 'User'
@@ -295,7 +390,7 @@ export default {
       const routeName = route.name
       const titles = {
         'Dashboard': 'Dashboard',
-        'SPPG': 'Data SPPG',
+        'SPPG': `Data ${configStore.sppgName}`,
         'Pegawai': 'Data Pegawai',
         'BahanBaku': 'Data Bahan Baku',
         'Menu': 'Data Menu',
@@ -303,7 +398,8 @@ export default {
         'Supplier': 'Data Supplier',
         'UserManagement': 'Manajemen User',
         'StokOpname': 'Stok Opname',
-        'DistribusiMakanan': 'Distribusi Makanan'
+        'DistribusiMakanan': 'Distribusi Makanan',
+        'KomposisiPangan': 'Komposisi Pangan'
       }
       return titles[routeName] || 'Dashboard'
     }
@@ -316,11 +412,41 @@ export default {
       }
     }
 
+    const closeMobileMenu = () => {
+      // Reliable way to close offcanvas without worrying about global bootstrap instance:
+      // Find the trigger button inside the offcanvas and click it.
+      const mobileSidebar = document.getElementById('mobileSidebar')
+      if (mobileSidebar) {
+        // Option 1: Try getting the bootstrap instance directly if available globally
+        try {
+            const bsOffcanvas = window.bootstrap?.Offcanvas?.getInstance(mobileSidebar)
+            if (bsOffcanvas) {
+                bsOffcanvas.hide()
+                return
+            }
+        } catch (e) {
+            // ignore
+        }
+        
+        // Option 2 (Fallback): Find the dismiss button and click it
+        const closeBtn = mobileSidebar.querySelector('[data-bs-dismiss="offcanvas"]')
+        if (closeBtn) {
+            closeBtn.click()
+        }
+      }
+    }
+
     return {
       authStore,
+      configStore,
       getUserInitials,
       getCurrentPageTitle,
-      handleLogout
+      handleLogout,
+      closeMobileMenu,
+      isSidebarCollapsed,
+      isEffectivelyCollapsed,
+      toggleSidebar,
+      handleSidebarHover
     }
   }
 }
@@ -347,10 +473,84 @@ export default {
   top: 0;
   left: 0;
   z-index: 1000;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  box-shadow: 4px 0 15px rgba(0,0,0,0.05); /* Softer shadow */
   overflow-y: auto;
+  overflow-x: hidden; /* Prevent horizontal scroll */
   margin: 0;
   padding: 0;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother bezier transition */
+}
+
+/* Sidebar Branding */
+.brand-logo {
+  font-weight: 800;
+  letter-spacing: 1px;
+}
+.brand-logo-collapsed {
+  animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Toggle Button Styling */
+.toggle-container {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 1.5rem;
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.sidebar.collapsed .toggle-container {
+  justify-content: center;
+  padding: 0;
+}
+.toggle-icon {
+  background: rgba(255, 255, 255, 0.2);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: white;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+.toggle-container:hover .toggle-icon {
+  background: rgba(255, 255, 255, 0.4);
+  transform: scale(1.1);
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar.collapsed .nav-link {
+  justify-content: center;
+  padding: 0.8rem 0;
+  margin: 0.2rem 0.5rem; /* Centered with margin */
+}
+
+.sidebar.collapsed .nav-link i {
+  margin-right: 0 !important;
+  font-size: 1.4rem;
+  transition: transform 0.3s ease;
+}
+
+.sidebar.collapsed .nav-link:hover i {
+  transform: scale(1.2);
+}
+
+.collapsed-divider {
+  height: 2px;
+  background: rgba(255, 255, 255, 0.5);
+  margin: 5px auto;
+  width: 30px;
+  border-radius: 2px;
 }
 
 .sidebar-header h4 {
@@ -360,24 +560,36 @@ export default {
 .nav-section-title {
   font-weight: 600;
   letter-spacing: 0.5px;
+  opacity: 0.7;
+  font-size: 0.75rem;
+  transition: opacity 0.3s;
 }
 
 .sidebar .nav-link {
   color: rgba(255, 255, 255, 0.8);
-  padding: 0.75rem 1.5rem;
-  margin: 0.1rem 0;
-  border-radius: 8px;
+  padding: 0.85rem 1.5rem;
+  margin: 0.2rem 0.8rem; /* Add side margins for floating feel */
+  border-radius: 12px; /* More rounded */
   transition: all 0.3s ease;
   text-decoration: none;
   display: flex;
   align-items: center;
+  position: relative;
+  overflow: hidden;
 }
 
-.sidebar .nav-link:hover,
-.sidebar .nav-link.active {
-  background: rgba(255, 255, 255, 0.1);
+.sidebar .nav-link:hover {
+  background: rgba(255, 255, 255, 0.15);
   color: white;
-  text-decoration: none;
+  transform: translateX(3px); /* Subtle nudge */
+}
+
+.sidebar .nav-link.active {
+  background: rgba(255, 255, 255, 0.25); /* Stronger active background */
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Subtle depth */
+  backdrop-filter: blur(5px);
 }
 
 .main-content {
@@ -392,6 +604,14 @@ export default {
   display: flex;
   flex-direction: column;
   margin: 0;
+  transition: all 0.3s ease;
+}
+
+@media (min-width: 992px) {
+  .main-content.collapsed {
+    left: 80px;
+    width: calc(100vw - 80px);
+  }
 }
 
 @media (max-width: 991px) {
@@ -540,5 +760,56 @@ export default {
   width: 1.2em;
   height: 1em;
   opacity: 0.5;
+}
+
+/* Helper for mobile menu scrolling */
+.mobile-nav-list {
+  padding-bottom: 100px !important; /* Ensure last item is reachable */
+}
+
+/* Match mobile sidebar aesthetic to desktop */
+.custom-mobile-sidebar {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white;
+  width: 75vw !important; /* 3/4 width */
+  max-width: 320px !important; /* Cap it for larger mobile screens/tablets */
+}
+
+.custom-mobile-sidebar .offcanvas-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-mobile-sidebar .nav-link {
+  color: rgba(255, 255, 255, 0.8) !important;
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  margin: 0.2rem 0;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.custom-mobile-sidebar .nav-link:hover,
+.custom-mobile-sidebar .nav-link.active,
+.custom-mobile-sidebar .nav-link.router-link-active {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: white !important;
+}
+
+/* Override existing offcanvas body link styles if any conflict */
+.offcanvas-body .nav-link:hover,
+.offcanvas-body .nav-link.active {
+  background: rgba(255, 255, 255, 0.15); /* Match desktop hover */
+  color: white;
+}
+
+.border-white-10 {
+  border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Force scrollability to enable pull-to-refresh on mobile */
+.page-content-wrapper {
+  min-height: calc(100vh + 1px);
 }
 </style>

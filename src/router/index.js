@@ -88,6 +88,11 @@ const routes = [
         path: 'management/recipe-management',
         name: 'RecipeManagement',
         component: RecipeManagementView
+      },
+      {
+        path: 'tools/komposisi-pangan',
+        name: 'KomposisiPangan',
+        component: () => import('@/views/tools/KomposisiPanganView.vue')
       }
     ]
   },

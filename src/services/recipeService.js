@@ -14,6 +14,17 @@ const recipeService = {
     }
   },
 
+  // Get recipe statistics
+  async getStatistics() {
+    try {
+      const response = await apiClient.get('/recipes/statistics')
+      return response.data
+    } catch (error) {
+      console.error('Error fetching recipe statistics:', error)
+      throw error
+    }
+  },
+
   // Get menu with complete recipe
   async getMenuRecipe(idMenu) {
     try {

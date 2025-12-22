@@ -208,6 +208,7 @@ import { useRoute, useRouter } from 'vue-router'
 import RecipeManagement from '@/components/recipe/RecipeManagement.vue'
 import IngredientCalculator from '@/components/calculator/IngredientCalculator.vue'
 import ShoppingList from '@/components/calculator/ShoppingList.vue'
+import recipeService from '@/services/recipeService'
 import { useToast } from 'vue-toastification'
 
 export default {
@@ -248,44 +249,24 @@ export default {
     // Methods
     const loadStats = async () => {
       try {
-        // In a real app, these would be actual API calls
-        stats.totalMenus = 25
-        stats.menusWithRecipes = 18
-        stats.totalRecipeItems = 156
-        stats.uniqueIngredients = 45
+        const response = await recipeService.getStatistics()
+        if (response.success && response.data) {
+          const data = response.data
+          // Update stats
+          stats.totalMenus = data.stats.totalMenus
+          stats.menusWithRecipes = data.stats.menusWithRecipes
+          stats.totalRecipeItems = data.stats.totalRecipeItems
+          stats.uniqueIngredients = data.stats.uniqueIngredients
+
+          // Update activities
+          recentActivity.value = data.recentActivity.map(activity => ({
+            ...activity,
+            timestamp: new Date(activity.timestamp)
+          }))
+        }
       } catch (error) {
         console.error('Failed to load stats:', error)
-      }
-    }
-
-    const loadRecentActivity = async () => {
-      try {
-        // Mock data for recent activity
-        recentActivity.value = [
-          {
-            id: 1,
-            type: 'create',
-            title: 'Resep baru ditambahkan',
-            description: 'Ayam Goreng Krispi - 5 bahan',
-            timestamp: new Date(Date.now() - 1000 * 60 * 5)
-          },
-          {
-            id: 2,
-            type: 'update',
-            title: 'Resep diperbarui',
-            description: 'Nasi Goreng - update jumlah bahan',
-            timestamp: new Date(Date.now() - 1000 * 60 * 30)
-          },
-          {
-            id: 3,
-            type: 'calculate',
-            title: 'Perhitungan kebutuhan',
-            description: '100 porsi Nasi Goreng',
-            timestamp: new Date(Date.now() - 1000 * 60 * 60)
-          }
-        ]
-      } catch (error) {
-        console.error('Failed to load recent activity:', error)
+        toast.error('Gagal memuat statistik resep')
       }
     }
 
@@ -389,7 +370,6 @@ export default {
     onMounted(() => {
       handleRouteQuery()
       loadStats()
-      loadRecentActivity()
     })
 
     return {

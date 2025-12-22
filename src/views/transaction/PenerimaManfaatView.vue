@@ -12,6 +12,7 @@
       <button
         v-if="!showAddForm"
         class="btn btn-primary btn-lg rounded-pill px-4"
+        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
         @click="showAddForm = true"
       >
         <i class="bi bi-plus-circle me-2"></i>
@@ -54,7 +55,7 @@
 
     <!-- Tabel Data -->
     <div v-if="hasPenerimaManfaatData && !showAddForm" class="card shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
+      <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="bi bi-person-check me-2"></i>
@@ -628,6 +629,16 @@ export default {
   border-bottom: 2px solid #dee2e6;
 }
 
+.table thead th:first-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.table thead th:last-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
 .btn {
   border-radius: 6px;
 }
@@ -638,5 +649,17 @@ export default {
 
 .card {
   border-radius: 12px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+  background-color: transparent !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 </style>
