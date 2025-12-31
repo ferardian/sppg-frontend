@@ -85,6 +85,14 @@
                 required
               >
             </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Kategori</label>
+              <select class="form-select" v-model="form.kategori">
+                 <option value="">-- Pilih Kategori --</option>
+                 <option value="Basah">Basah</option>
+                 <option value="Kering">Kering</option>
+              </select>
+            </div>
           </div>
           <div class="row">
             <div class="col-md-2 mb-2">
@@ -301,6 +309,9 @@
                   <i class="bi bi-tag me-1"></i>Nama Menu
                 </th>
                 <th class="border-0">
+                  <i class="bi bi-tags me-1"></i>Kategori
+                </th>
+                <th class="border-0">
                   <i class="bi bi-fire me-1"></i>Kalori
                 </th>
                 <th class="border-0">
@@ -321,6 +332,11 @@
                 <td>
                   <div class="fw-semibold text-dark">{{ item.nama_menu }}</div>
                   <small class="text-muted">{{ item.deskripsi || '-' }}</small>
+                </td>
+                <td>
+                   <span class="badge" :class="item.kategori === 'Basah' ? 'bg-info' : (item.kategori === 'Kering' ? 'bg-warning' : 'bg-secondary')">
+                      {{ item.kategori || '-' }}
+                   </span>
                 </td>
                 <td>
                   <div class="d-flex align-items-center">
@@ -379,6 +395,7 @@ export default {
     const form = ref({
       kode_menu: '',
       nama_menu: '',
+      kategori: '',
       kalori_per_porsi: '',
       protein_gram: '',
       karbohidrat_gram: '',
@@ -485,6 +502,7 @@ export default {
         form.value = {
           kode_menu: detailData.kode_menu || '',
           nama_menu: detailData.nama_menu || '',
+          kategori: detailData.kategori || '',
           kalori_per_porsi: detailData.kalori_per_porsi || '',
           protein_gram: detailData.protein_gram || '',
           karbohidrat_gram: detailData.karbohidrat_gram || '',
@@ -557,6 +575,7 @@ export default {
       form.value = {
         kode_menu: '',
         nama_menu: '',
+        kategori: '',
         kalori_per_porsi: '',
         protein_gram: '',
         karbohidrat_gram: '',

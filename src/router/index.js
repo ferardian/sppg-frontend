@@ -93,7 +93,17 @@ const routes = [
         path: 'tools/komposisi-pangan',
         name: 'KomposisiPangan',
         component: () => import('@/views/tools/KomposisiPanganView.vue')
-      }
+      },
+      {
+        path: 'tools/shopping-list',
+        name: 'ShoppingList',
+        component: () => import('@/views/tools/ShoppingListView.vue')
+      },
+      {
+        path: 'tools/rab',
+        name: 'RAB',
+        component: () => import('@/views/tools/RencanaAnggaranBelanjaView.vue')
+      },
     ]
   },
   {

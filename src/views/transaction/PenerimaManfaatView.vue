@@ -81,7 +81,7 @@
                   <i class="bi bi-tag me-1"></i>Jenis Penerima
                 </th>
                 <th class="border-0">
-                  <i class="bi bi-fork-knife me-1"></i>Jenis Porsi
+                  <i class="bi bi-pie-chart me-1"></i>Porsi (B/S/K)
                 </th>
                 <th class="border-0">
                   <i class="bi bi-geo-alt me-1"></i>Lokasi
@@ -112,9 +112,17 @@
                   </span>
                 </td>
                 <td class="align-middle">
-                  <span class="badge bg-warning text-dark">
-                    {{ item.nama_jenis_porsi }}
-                  </span>
+                  <div class="d-flex flex-column gap-1">
+                    <span class="badge bg-primary bg-opacity-10 text-primary border border-primary text-start">
+                      B: <strong>{{ item.porsi_besar || 0 }}</strong>
+                    </span>
+                    <span class="badge bg-success bg-opacity-10 text-success border border-success text-start">
+                      S: <strong>{{ item.porsi_sedang || 0 }}</strong>
+                    </span>
+                    <span class="badge bg-info bg-opacity-10 text-info border border-info text-start">
+                      K: <strong>{{ item.porsi_kecil || 0 }}</strong>
+                    </span>
+                  </div>
                 </td>
                 <td class="align-middle">
                   <div>
@@ -219,22 +227,6 @@
               </select>
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Jenis Porsi * <small class="text-muted">({{ jenisPorsiList.length }} items)</small></label>
-              <select v-model="form.id_jenis_porsi" class="form-select" required>
-                <option value="">Pilih Jenis Porsi</option>
-                <option
-                  v-for="jenis in jenisPorsiList"
-                  :key="jenis.id_jenis_porsi"
-                  :value="jenis.id_jenis_porsi"
-                >
-                  {{ jenis.nama_porsi }}
-                </option>
-              </select>
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
               <label class="form-label">NPSN/NSS</label>
               <input
                 v-model="form.npsn_nss"
@@ -243,6 +235,9 @@
                 placeholder="Masukkan NPSN/NSS"
               >
             </div>
+          </div>
+
+          <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Nama Kepala Sekolah *</label>
               <input
@@ -312,7 +307,25 @@
                 min="1"
               >
             </div>
+          </div>
+
+           <div class="row">
             <div class="col-md-4 mb-3">
+               <label class="form-label">Porsi Besar</label>
+               <input v-model="form.porsi_besar" type="number" class="form-control" min="0" placeholder="0">
+            </div>
+            <div class="col-md-4 mb-3">
+               <label class="form-label">Porsi Sedang</label>
+               <input v-model="form.porsi_sedang" type="number" class="form-control" min="0" placeholder="0">
+            </div>
+            <div class="col-md-4 mb-3">
+               <label class="form-label">Porsi Kecil</label>
+               <input v-model="form.porsi_kecil" type="number" class="form-control" min="0" placeholder="0">
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
               <label class="form-label">Status Gizi Umum *</label>
               <select v-model="form.status_gizi_umum" class="form-select" required>
                 <option value="">Pilih Status Gizi Umum</option>
@@ -399,7 +412,6 @@ export default {
     // Form data
     const form = ref({
       id_jenis_penerima: '',
-      id_jenis_porsi: '',
       kode_lembaga: '',
       nama_lembaga: '',
       npsn_nss: '',
@@ -411,6 +423,9 @@ export default {
       kabupaten_kota: '',
       provinsi: '',
       jumlah_siswa: '',
+      porsi_besar: 0,
+      porsi_sedang: 0,
+      porsi_kecil: 0,
       status_gizi_umum: '',
       tanggal_daftar: '',
       status: '',
@@ -500,7 +515,6 @@ export default {
 
       form.value = {
         id_jenis_penerima: item.id_jenis_penerima || '',
-        id_jenis_porsi: item.id_jenis_porsi || '',
         kode_lembaga: item.kode_lembaga || '',
         nama_lembaga: item.nama_lembaga || '',
         npsn_nss: item.npsn_nss || '',
@@ -512,8 +526,11 @@ export default {
         kabupaten_kota: item.kabupaten_kota || '',
         provinsi: item.provinsi || '',
         jumlah_siswa: item.jumlah_siswa || '',
+        porsi_besar: item.porsi_besar || 0,
+        porsi_sedang: item.porsi_sedang || 0,
+        porsi_kecil: item.porsi_kecil || 0,
         status_gizi_umum: item.status_gizi_umum || '',
-        tanggal_daftar: item.tanggal_daftar || '',
+        tanggal_daftar: item.tanggal_daftar ? item.tanggal_daftar.split('T')[0].split(' ')[0] : '',
         status: item.status || '',
       }
 
@@ -550,7 +567,6 @@ export default {
     const resetForm = () => {
       form.value = {
         id_jenis_penerima: '',
-        id_jenis_porsi: '',
         kode_lembaga: '',
         nama_lembaga: '',
         npsn_nss: '',
@@ -562,6 +578,9 @@ export default {
         kabupaten_kota: '',
         provinsi: '',
         jumlah_siswa: '',
+        porsi_besar: 0,
+        porsi_sedang: 0,
+        porsi_kecil: 0,
         status_gizi_umum: '',
         tanggal_daftar: '',
         status: '',
@@ -591,8 +610,7 @@ export default {
       console.log('🔵 PenerimaManfaatView component mounted successfully!')
       await Promise.all([
         fetchPenerimaManfaatData(),
-        fetchJenisPenerima(),
-        fetchJenisPorsi()
+        fetchJenisPenerima()
       ])
       // Generate preview kode after data is loaded
       generatePreviewKodeLembaga();

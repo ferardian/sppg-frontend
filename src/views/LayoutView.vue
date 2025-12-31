@@ -98,6 +98,24 @@
           </router-link>
         </li>
         <li class="nav-item">
+          <router-link to="/tools/shopping-list" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Rencana Menu' : ''">
+            <i class="bi bi-cart-check me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Rencana Menu</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/tools/rab" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Rencana Anggaran' : ''">
+            <i class="bi bi-wallet2 me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Rencana Anggaran</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Komposisi Pangan' : ''">
+            <i class="bi bi-egg-fried me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Komposisi Pangan</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
           <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Distribusi Makanan' : ''">
             <i class="bi bi-box-seam me-2"></i>
              <span v-show="!isEffectivelyCollapsed">Distribusi Makanan</span>
@@ -121,21 +139,7 @@
           </router-link>
         </li>
 
-        <!-- Tools -->
-        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
-          <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-            Tools
-          </h6>
-        </li>
-        <li class="nav-item" v-show="isEffectivelyCollapsed">
-           <div class="collapsed-divider"></div>
-        </li>
-        <li class="nav-item">
-          <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Komposisi Pangan' : ''">
-            <i class="bi bi-egg-fried me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Komposisi Pangan</span>
-          </router-link>
-        </li>
+
       </ul>
     </nav>
 
@@ -304,6 +308,24 @@
             </router-link>
           </li>
           <li class="nav-item">
+            <router-link to="/tools/shopping-list" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-cart-check me-2"></i>
+              Rencana Menu
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/tools/rab" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-wallet2 me-2"></i>
+              Rencana Anggaran
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-egg-fried me-2"></i>
+              Komposisi Pangan
+            </router-link>
+          </li>
+          <li class="nav-item">
             <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-box-seam me-2"></i>
               Distribusi Makanan
@@ -320,19 +342,6 @@
             <router-link to="/management/recipe-management" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-journal-text me-2"></i>
               Resep & Kalkulator
-            </router-link>
-          </li>
-
-          <!-- Tools -->
-          <li class="nav-item mt-3">
-            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-              Tools
-            </h6>
-          </li>
-          <li class="nav-item">
-            <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-egg-fried me-2"></i>
-              Komposisi Pangan
             </router-link>
           </li>
         </ul>
