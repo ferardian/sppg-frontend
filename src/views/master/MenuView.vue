@@ -223,16 +223,13 @@
                   <div class="card-body py-2">
                     <div class="row align-items-center">
                       <div class="col-md-5">
-                        <select
+                        <v-select
                           v-model="bahan.id_bahan_baku"
-                          class="form-select form-select-sm"
-                          required
-                        >
-                          <option value="">Pilih Bahan Baku</option>
-                          <option v-for="bb in bahanBakuList" :key="bb.id_bahan_baku" :value="bb.id_bahan_baku">
-                            {{ bb.nama_bahan_baku }}
-                          </option>
-                        </select>
+                          :options="bahanBakuList"
+                          :reduce="option => option.id_bahan_baku"
+                          label="nama_bahan_baku"
+                          placeholder="Cari Bahan Baku"
+                        ></v-select>
                       </div>
                       <div class="col-md-3">
                         <input
@@ -380,9 +377,14 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import menuService from '@/services/menuService'
 import bahanBakuService from '@/services/bahanBakuService'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 
 export default {
   name: 'MenuView',
+  components: {
+    vSelect
+  },
   setup() {
     // State management
     const showAddForm = ref(false)
