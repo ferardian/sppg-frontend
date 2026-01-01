@@ -18,7 +18,7 @@
       <!-- Stylish Toggle Button -->
       <div class="toggle-container" @click="toggleSidebar" :title="isSidebarCollapsed ? 'Expand' : 'Collapse'">
          <div class="toggle-icon">
-             <i class="bi" :class="isEffectivelyCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
+             <i class="bi bi-pin-angle"></i>
          </div>
       </div>
 
@@ -75,6 +75,12 @@
              <span v-show="!isEffectivelyCollapsed">Manajemen User</span>
           </router-link>
         </li>
+        <li class="nav-item">
+          <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Penerima Manfaat' : ''">
+            <i class="bi bi-person-check me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Penerima Manfaat</span>
+          </router-link>
+        </li>
 
         <!-- Transactions -->
         <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
@@ -85,12 +91,7 @@
         <li class="nav-item" v-show="isEffectivelyCollapsed">
            <div class="collapsed-divider"></div>
         </li>
-        <li class="nav-item">
-          <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Penerima Manfaat' : ''">
-            <i class="bi bi-person-check me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Penerima Manfaat</span>
-          </router-link>
-        </li>
+
         <li class="nav-item">
           <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Stok Opname' : ''">
             <i class="bi bi-clipboard-check me-2"></i>
@@ -109,12 +110,7 @@
              <span v-show="!isEffectivelyCollapsed">Rencana Anggaran</span>
           </router-link>
         </li>
-        <li class="nav-item">
-          <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Komposisi Pangan' : ''">
-            <i class="bi bi-egg-fried me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Komposisi Pangan</span>
-          </router-link>
-        </li>
+
         <li class="nav-item">
           <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Distribusi Makanan' : ''">
             <i class="bi bi-box-seam me-2"></i>
@@ -130,6 +126,12 @@
         </li>
         <li class="nav-item" v-show="isEffectivelyCollapsed">
            <div class="collapsed-divider"></div>
+        </li>
+        <li class="nav-item">
+          <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Komposisi Pangan' : ''">
+            <i class="bi bi-egg-fried me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Komposisi Pangan</span>
+          </router-link>
         </li>
         <li class="nav-item">
           <router-link to="/management/recipe-management" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Resep & Kalkulator' : ''">

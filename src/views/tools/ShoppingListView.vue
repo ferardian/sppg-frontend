@@ -35,7 +35,14 @@
                 <tr v-for="plan in planList" :key="plan.id_shopping_plan" :class="{'table-info': editPlanId === plan.id_shopping_plan}">
                    <td>{{ formatDate(plan.tanggal_rencana) }}</td>
                    <td>
-                      <span v-if="plan.nama_menu" class="badge bg-info text-dark">
+                      <div v-if="plan.nama_menu && plan.nama_menu.includes('|||')">
+                         <ul class="mb-0 ps-3 text-start">
+                            <li v-for="(m, i) in plan.nama_menu.split('|||')" :key="i" class="mb-1">
+                               <span class="badge bg-info text-dark text-wrap text-start">{{ m }}</span>
+                            </li>
+                         </ul>
+                      </div>
+                      <span v-else-if="plan.nama_menu" class="badge bg-info text-dark">
                         {{ plan.nama_menu }}
                       </span>
                       <span v-else class="text-muted small">-</span>
