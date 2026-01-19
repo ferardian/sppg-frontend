@@ -70,6 +70,11 @@ const routes = [
         component: UserManagementView
       },
       {
+        path: 'master-data/jabatan',
+        name: 'Jabatan',
+        component: () => import('@/views/master/JabatanView.vue')
+      },
+      {
         path: 'transactions/penerima-manfaat',
         name: 'PenerimaManfaat',
         component: PenerimaManfaatView
@@ -103,6 +108,16 @@ const routes = [
         path: 'tools/rab',
         name: 'RAB',
         component: () => import('@/views/tools/RencanaAnggaranBelanjaView.vue')
+      },
+      {
+        path: 'tools/buku-kas',
+        name: 'BukuKas',
+        component: () => import('@/views/tools/FinanceView.vue')
+      },
+      {
+        path: 'tools/laporan-gaji',
+        name: 'LaporanGaji',
+        component: () => import('@/views/tools/SalaryLogView.vue')
       },
     ]
   },

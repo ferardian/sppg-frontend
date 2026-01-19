@@ -13,7 +13,7 @@
         v-if="!showAddForm"
         class="btn btn-primary btn-lg rounded-pill px-4"
         style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
-        @click="showAddForm = true"
+        @click="openAddForm"
       >
         <i class="bi bi-plus-circle me-2"></i>
         Tambah Pegawai
@@ -46,7 +46,7 @@
         </div>
         <h4 class="mb-3 text-dark">Belum Ada Data Pegawai</h4>
         <p class="text-muted mb-4">Mulai dengan menambahkan data pegawai pertama Anda</p>
-        <button class="btn btn-primary btn-lg rounded-pill px-5" @click="showAddForm = true">
+        <button class="btn btn-primary btn-lg rounded-pill px-5" @click="openAddForm">
           <i class="bi bi-plus-circle me-2"></i>
           Tambah Pegawai Pertama
         </button>
@@ -70,8 +70,8 @@
                 v-model="form.nip"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan NIP"
-                required
+                placeholder="Otomatis (PGWxxxx)"
+                readonly
               >
             </div>
             <div class="col-md-6 mb-3">
@@ -110,22 +110,12 @@
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Jabatan</label>
-              <select
+              <v-select
                 v-model="form.jabatan"
-                class="form-select"
-                required
-              >
-                <option value="">Pilih Jabatan</option>
-                <option value="SPPI">SPPI</option>
-                <option value="Ahli Gizi">Ahli Gizi</option>
-                <option value="Akuntansi">Akuntansi</option>
-                <option value="Admin">Admin</option>
-                <option value="Asisten Lapangan">Asisten Lapangan</option>
-                <option value="Pengolahan">Pengolahan</option>
-                <option value="Persiapan">Persiapan</option>
-                <option value="Pemorsian">Pemorsian</option>
-                <option value="Distribusi">Distribusi</option>
-              </select>
+                :options="jabatanList"
+                placeholder="Pilih Jabatan"
+                class="style-chooser"
+              ></v-select>
             </div>
             <div class="col-md-6 mb-3">
               <label class="form-label">Status</label>
@@ -177,20 +167,33 @@
     <!-- Tabel data pegawai -->
     <div v-if="hasPegawaiData" class="card shadow-sm">
       <div class="card-header bg-gradient-primary text-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <h5 class="mb-0">
             <i class="bi bi-people me-2"></i>
             Data Pegawai
           </h5>
-          <span class="badge bg-white text-primary">
-            {{ pegawaiData.length }} Data
-          </span>
+          <div class="d-flex align-items-center gap-2">
+            <div class="input-group" style="width: 300px;">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control border-start-0" 
+                placeholder="Cari nama, NIP, atau jabatan..."
+                v-model="searchQuery"
+              >
+            </div>
+            <span class="badge bg-white text-primary">
+              {{ filteredPegawai.length }} / {{ pegawaiData.length }} Data
+            </span>
+          </div>
         </div>
       </div>
       <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
           <table class="table table-hover mb-0">
-            <thead class="table-light">
+            <thead class="table-light sticky-top">
               <tr>
                 <th class="border-0">
                   <i class="bi bi-hash me-1"></i>NIP
@@ -216,7 +219,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="pegawai in pegawaiData" :key="pegawai.id_pegawai" class="align-middle">
+              <tr v-if="filteredPegawai.length === 0">
+                <td colspan="7" class="text-center py-5 text-muted">
+                  <i class="bi bi-search fs-1 d-block mb-2"></i>
+                  Tidak ada data yang sesuai dengan pencarian "{{ searchQuery }}"
+                </td>
+              </tr>
+              <tr v-for="pegawai in filteredPegawai" :key="pegawai.id_pegawai" class="align-middle">
                 <td>
                   <span class="fw-bold text-primary px-2 py-1" style="background-color: #e3f2fd; border: 1px solid #bbdefb; border-radius: 4px;">
                     {{ pegawai.nip }}
@@ -279,15 +288,22 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import pegawaiService from '@/services/pegawaiService'
+import jabatanService from '@/services/jabatanService'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 
 export default {
   name: 'PegawaiView',
+  components: {
+    vSelect
+  },
   setup() {
     // State management
     const showAddForm = ref(false)
     const pegawaiData = ref([])
     const loading = ref(false)
     const error = ref('')
+    const searchQuery = ref('')
 
     // Form data
     const form = ref({
@@ -302,13 +318,40 @@ export default {
     })
 
     const editingId = ref(null)
+    const jabatanList = ref([])
 
     // Computed properties
     const hasPegawaiData = computed(() => {
       return pegawaiData.value.length > 0
     })
 
+    const filteredPegawai = computed(() => {
+      if (!searchQuery.value) {
+        return pegawaiData.value
+      }
+      
+      const query = searchQuery.value.toLowerCase()
+      return pegawaiData.value.filter(pegawai => {
+        return (
+          pegawai.nama_lengkap?.toLowerCase().includes(query) ||
+          pegawai.nip?.toLowerCase().includes(query) ||
+          pegawai.jabatan?.toLowerCase().includes(query) ||
+          pegawai.email?.toLowerCase().includes(query) ||
+          pegawai.telepon?.toLowerCase().includes(query)
+        )
+      })
+    })
+
     // Methods
+    const fetchJabatanData = async () => {
+      try {
+        const response = await jabatanService.getAll()
+        jabatanList.value = (response.data || []).map(j => j.nama_jabatan)
+      } catch (err) {
+        console.error('Error fetching jabatan data:', err)
+      }
+    }
+
     const fetchPegawaiData = async () => {
       try {
         loading.value = true
@@ -407,6 +450,28 @@ export default {
       }
     }
 
+    const generateNIP = () => {
+      // Find the highest existing NIP starting with PGW
+      const existingNips = pegawaiData.value
+        .map(p => p.nip)
+        .filter(nip => nip && nip.startsWith('PGW'))
+        .map(nip => parseInt(nip.replace('PGW', '')) || 0)
+        .sort((a, b) => b - a)
+      
+      const nextNum = existingNips.length > 0 ? existingNips[0] + 1 : 1
+      const nextNip = `PGW${String(nextNum).padStart(4, '0')}`
+      
+      form.value.nip = nextNip
+      console.log('Generated NIP:', nextNip)
+    }
+
+    const openAddForm = () => {
+      resetForm()
+      generateNIP()
+      showAddForm.value = true
+      editingId.value = null
+    }
+
     const cancelAdd = () => {
       resetForm()
       showAddForm.value = false
@@ -429,6 +494,7 @@ export default {
     // Lifecycle
     onMounted(() => {
       console.log('🟢 PegawaiView component mounted successfully!')
+      fetchJabatanData()
       fetchPegawaiData()
     })
 
@@ -439,17 +505,23 @@ export default {
       form,
       loading,
       error,
+      searchQuery,
+      editingId, // Added editingId to export
 
       // Computed
       hasPegawaiData,
+      filteredPegawai,
 
       // Methods
+      fetchJabatanData,
       fetchPegawaiData,
       savePegawai,
       editPegawai,
       deletePegawai,
       cancelAdd,
-      resetForm
+      resetForm,
+      openAddForm,
+      jabatanList
     }
   }
 }
@@ -658,5 +730,31 @@ export default {
   background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Sticky table header */
+.sticky-top {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8f9fa !important;
+}
+
+/* Search input styling */
+.input-group-text {
+  border-right: 0;
+}
+
+.form-control.border-start-0:focus {
+  border-left: 0;
+  box-shadow: none;
+}
+
+.input-group:focus-within .input-group-text {
+  border-color: #667eea;
+}
+
+.input-group:focus-within .form-control {
+  border-color: #667eea;
 }
 </style>

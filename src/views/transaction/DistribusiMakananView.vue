@@ -1,5 +1,7 @@
 <template>
   <div>
+    <!-- Main Content (hidden when printing) -->
+    <div class="no-print">
     <!-- Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <h3 class="mb-0">
@@ -82,15 +84,7 @@
                       </div>
                     </div>
                   </div>
-                  <div class="col-md-2">
-                    <div class="card bg-light border-primary">
-                      <div class="card-body p-2">
-                        <h6 class="text-primary mb-1">Penerima</h6>
-                        <h4 class="mb-0 text-primary">{{ formatNumber(summaryData.total_penerima || getTotalPenerima()) }}</h4>
-                        <small class="text-muted">lokasi</small>
-                      </div>
-                    </div>
-                  </div>
+
                 </div>
 
                 <!-- Menu Information -->
@@ -199,7 +193,7 @@
     </div>
 
     <!-- Add/Edit Form -->
-    <div v-if="showAddForm" class="card mb-4">
+    <div v-if="showAddForm" ref="formCard" class="card mb-4">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="bi me-2" :class="isEdit ? 'bi-pencil-square' : 'bi-plus-circle'"></i>
@@ -213,6 +207,58 @@
         </button>
       </div>
       <div class="card-body">
+         <!-- Rencana Distribusi Section -->
+        <div class="mb-4 p-3 bg-light rounded border-start border-4 border-primary">
+          <div class="row align-items-end g-3">
+             <div class="col-md-5">
+               <label class="form-label fw-bold text-primary">
+                 <i class="bi bi-cart4 me-2"></i>Rencana Distribusi
+               </label>
+               <v-select
+                  v-model="selectedPlanId"
+                  :options="shoppingPlans"
+                  :reduce="plan => plan.id_shopping_plan"
+                  label="nama_menu"
+                  placeholder="Pilih Rencana Belanja..."
+                  @update:modelValue="loadPlanDetails"
+                  class="bg-white"
+               >
+                 <template #option="{ nama_menu, tanggal_rencana }">
+                    <div>
+                      <div class="fw-bold text-truncate" style="max-width: 400px;">{{ nama_menu || 'Rencana Tanpa Menu' }}</div>
+                      <small class="text-muted">{{ formatDate(tanggal_rencana) }}</small>
+                    </div>
+                 </template>
+               </v-select>
+             </div>
+             
+             <div class="col-md-7">
+                <div v-if="plannedDistributions.length > 0" class="small text-muted mb-2">
+                   <i class="bi bi-check-circle-fill text-success me-1"></i>
+                   Item Rencana Tersedia:
+                </div>
+                <div v-if="plannedDistributions.length > 0" class="d-flex flex-wrap gap-2">
+                   <button 
+                      v-for="(item, idx) in plannedDistributions" 
+                      :key="idx"
+                      type="button"
+                      class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                      @click="fillFromPlan(item)"
+                      :class="{'active': form.id_menu === item.menu_id && form.id_jenis_porsi === item.portion_id}"
+                   >
+                      <i class="bi bi-box-seam me-1"></i>
+                      {{ item.menu_name }} - {{ item.portion_name }}
+                      <span class="badge bg-primary ms-2">{{ item.quantity }}</span>
+                   </button>
+                </div>
+                <div v-else-if="selectedPlanId" class="text-muted small fst-italic mt-2">
+                   <i class="bi bi-info-circle me-1"></i>
+                   Memuat detail rencana...
+                </div>
+             </div>
+          </div>
+        </div>
+        
         <form @submit.prevent="saveForm">
           <div class="row">
             <!-- Tanggal Distribusi -->
@@ -233,40 +279,20 @@
             <!-- Waktu Makan -->
             <div class="col-md-6 mb-3">
               <label class="form-label">Waktu Makan *</label>
-              <select
+              <v-select
                 v-model="form.waktu_makan"
-                class="form-select"
+                :options="waktuMakanOptions"
+                :reduce="option => option.value"
+                label="label"
+                placeholder="Pilih Waktu Makan"
                 :class="{ 'is-invalid': errors.waktu_makan }"
-                required
-              >
-                <option value="">Pilih Waktu Makan</option>
-                <option v-for="option in waktuMakanOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
+              ></v-select>
               <div class="invalid-feedback" v-if="errors.waktu_makan">
                 {{ errors.waktu_makan }}
               </div>
             </div>
 
-            <!-- Penerima Manfaat -->
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Penerima Manfaat *</label>
-              <select
-                v-model="form.id_penerima"
-                class="form-select"
-                :class="{ 'is-invalid': errors.id_penerima }"
-                required
-              >
-                <option value="">Pilih Penerima</option>
-                <option v-for="penerima in penerimaList" :key="penerima.id_penerima" :value="penerima.id_penerima">
-                  {{ penerima.nama_penerima }}
-                </option>
-              </select>
-              <div class="invalid-feedback" v-if="errors.id_penerima">
-                {{ errors.id_penerima }}
-              </div>
-            </div>
+
 
             <!-- Menu -->
             <div class="col-md-6 mb-3">
@@ -312,10 +338,6 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">
                 Jumlah Porsi *
-                <small class="text-success" v-if="selectedPenerima && selectedPenerima.jumlah_siswa && form.jumlah_porsi === selectedPenerima.jumlah_siswa">
-                  <i class="bi bi-check-circle-fill me-1"></i>
-                  Auto-filled dari {{ selectedPenerima.jumlah_siswa }} siswa
-                </small>
               </label>
               <input
                 v-model.number="form.jumlah_porsi"
@@ -327,10 +349,7 @@
                 @input="calculateTotalKalori"
                 required
               >
-              <div class="form-text" v-if="selectedPenerima">
-                <i class="bi bi-info-circle me-1"></i>
-                {{ selectedPenerima.nama_lembaga }} memiliki {{ selectedPenerima.jumlah_siswa }} siswa
-              </div>
+
               <div class="invalid-feedback" v-if="errors.jumlah_porsi">
                 {{ errors.jumlah_porsi }}
               </div>
@@ -339,16 +358,14 @@
             <!-- Pegawai -->
             <div class="col-md-6 mb-3">
               <label class="form-label">Petugas Distribusi</label>
-              <select
+              <v-select
                 v-model="form.id_pegawai"
-                class="form-select"
+                :options="pegawaiList"
+                :reduce="pegawai => pegawai.id_pegawai"
+                label="nama_lengkap"
+                placeholder="Pilih Petugas"
                 :class="{ 'is-invalid': errors.id_pegawai }"
-              >
-                <option value="">Pilih Petugas</option>
-                <option v-for="pegawai in pegawaiList" :key="pegawai.id_pegawai" :value="pegawai.id_pegawai">
-                  {{ pegawai.nama_lengkap }}
-                </option>
-              </select>
+              ></v-select>
               <div class="invalid-feedback" v-if="errors.id_pegawai">
                 {{ errors.id_pegawai }}
               </div>
@@ -357,17 +374,21 @@
             <!-- Status Distribusi -->
             <div class="col-md-6 mb-3">
               <label class="form-label">Status Distribusi *</label>
-              <select
+              <v-select
                 v-model="form.status_distribusi"
-                class="form-select"
+                :options="statusOptions"
+                :reduce="option => option.value"
+                label="label"
+                placeholder="Pilih Status"
                 :class="{ 'is-invalid': errors.status_distribusi }"
-                required
               >
-                <option value="">Pilih Status</option>
-                <option v-for="option in statusOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
+                 <template #option="{ label, color }">
+                    <span :class="`badge bg-${color}`">{{ label }}</span>
+                 </template>
+                 <template #selected-option="{ label, color }">
+                    <span :class="`badge bg-${color}`">{{ label }}</span>
+                 </template>
+              </v-select>
               <div class="invalid-feedback" v-if="errors.status_distribusi">
                 {{ errors.status_distribusi }}
               </div>
@@ -401,32 +422,13 @@
                     <strong>Total Kalori ({{ form.jumlah_porsi }} porsi):</strong>
                     <span class="fs-5 text-primary"> {{ formatNumber(totalKalori) }} kcal</span>
                   </div>
-                  <div class="col-md-6" v-if="selectedPenerima">
-                    <strong>Kebutuhan Kalori Harian:</strong>
-                    <span> {{ formatNumber(selectedPenerima.kebutuhan_kalori) }} kcal</span>
-                  </div>
+
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Status Distribusi -->
-          <div class="mb-3">
-            <label class="form-label">Status Distribusi *</label>
-            <select
-              v-model="form.status_distribusi"
-              class="form-select"
-              :class="{ 'is-invalid': errors.status_distribusi }"
-            >
-              <option value="">Pilih Status</option>
-              <option v-for="status in statusOptions" :key="status.value" :value="status.value">
-                {{ status.label }}
-              </option>
-            </select>
-            <div class="invalid-feedback" v-if="errors.status_distribusi">
-              {{ errors.status_distribusi }}
-            </div>
-          </div>
+
 
           <!-- Calculator Nutrisi -->
           <div v-if="calculatorData.ingredients.length > 0" class="card mb-3 border-info">
@@ -446,6 +448,7 @@
                       <th class="text-center" style="width: 50px">Use</th>
                       <th class="text-center" style="width: 50px">Link</th>
                       <th>Bahan Baku</th>
+                      <th class="text-center bg-light border-start border-end">Net (g)</th>
                       <th class="text-end">Energi (kcal)</th>
                       <th class="text-end">Protein (g)</th>
                       <th class="text-end">Lemak (g)</th>
@@ -461,7 +464,7 @@
                         </div>
                       </td>
                       <td class="text-center">
-                         <button 
+                        <button 
                             type="button"
                             class="btn btn-sm p-0 d-flex align-items-center justify-content-center mx-auto" 
                             :class="bahan.komposisi_pangan ? 'btn-outline-success' : 'btn-outline-secondary'"
@@ -482,26 +485,29 @@
                           <i class="bi bi-exclamation-circle text-warning me-1"></i>Belum terhubung
                         </small>
                       </td>
-                      <td class="text-end" :class="{'text-muted': !bahan.included}">
-                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.energi_kal) : '-' }}
+                      <td class="text-center border-start border-end bg-light fw-bold">
+                           {{ formatNumber(bahan.jumlah_bahan) }}
                       </td>
                       <td class="text-end" :class="{'text-muted': !bahan.included}">
-                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.protein_g) : '-' }}
+                        {{ bahan.komposisi_pangan ? formatNumber(getCalculatedNutrition(bahan, 'kalori')) : '-' }}
                       </td>
                       <td class="text-end" :class="{'text-muted': !bahan.included}">
-                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.lemak_g) : '-' }}
+                        {{ bahan.komposisi_pangan ? formatNumber(getCalculatedNutrition(bahan, 'protein')) : '-' }}
                       </td>
                       <td class="text-end" :class="{'text-muted': !bahan.included}">
-                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.kh_g) : '-' }}
+                        {{ bahan.komposisi_pangan ? formatNumber(getCalculatedNutrition(bahan, 'lemak')) : '-' }}
                       </td>
                       <td class="text-end" :class="{'text-muted': !bahan.included}">
-                        {{ bahan.komposisi_pangan ? formatNumber(bahan.komposisi_pangan.serat_g) : '-' }}
+                        {{ bahan.komposisi_pangan ? formatNumber(getCalculatedNutrition(bahan, 'karbohidrat')) : '-' }}
+                      </td>
+                      <td class="text-end" :class="{'text-muted': !bahan.included}">
+                        {{ bahan.komposisi_pangan ? formatNumber(getCalculatedNutrition(bahan, 'serat')) : '-' }}
                       </td>
                     </tr>
                   </tbody>
                   <tfoot class="table-light fw-bold">
                     <tr>
-                      <td colspan="3" class="text-end">Total Nilai Gizi:</td>
+                      <td colspan="4" class="text-end">Total Nilai Gizi:</td>
                       <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.kalori) }}</td>
                       <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.protein) }}</td>
                       <td class="text-end fs-6 text-primary">{{ formatNumber(calculatedTotals.lemak) }}</td>
@@ -693,12 +699,20 @@
               @change="loadData"
             >
           </div>
-          <div class="col-md-1 d-flex align-items-end">
+          <div class="col-md-2 d-flex align-items-end gap-2">
             <button
-              class="btn btn-outline-secondary w-100"
+              class="btn btn-outline-secondary w-50"
               @click="resetFilters"
+              title="Reset Filter"
             >
               <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button
+              class="btn btn-primary w-50"
+              @click="handlePrint"
+              title="Cetak Distribusi"
+            >
+              <i class="bi bi-printer"></i>
             </button>
           </div>
         </div>
@@ -732,10 +746,11 @@
                   Waktu
                   <i class="bi bi-arrow-down-up"></i>
                 </th>
-                <th>Penerima</th>
+
                 <th>Menu</th>
-                <th>Porsi</th>
-                <th>Total Kalori</th>
+                <th>Jenis Porsi</th>
+                <th>Jml Porsi</th>
+                <th>Penerima Manfaat</th>
                 <th>Nutrisi Aktual</th>
                 <th @click="sortBy('status_distribusi')" style="cursor: pointer;">
                   Status
@@ -753,11 +768,19 @@
                     {{ getWaktuMakanLabel(item.waktu_makan) }}
                   </span>
                 </td>
-                <td>{{ item.nama_penerima || '-' }}</td>
+
                 <td>{{ item.nama_menu || '-' }}</td>
-                <td>{{ item.jumlah_porsi }} {{ item.nama_jenis_porsi || '' }}</td>
+                <td><span class="badge bg-info text-white">{{ item.nama_jenis_porsi || '-' }}</span></td>
+                <td class="text-center">{{ item.jumlah_porsi }}</td>
                 <td>
-                  <strong>{{ formatNumber(item.total_kalori) }}</strong> kcal
+                   <div v-if="item.penerima_manfaat && item.penerima_manfaat.length > 0">
+                      <div class="d-flex flex-wrap gap-1">
+                        <span v-for="penerima in item.penerima_manfaat" :key="penerima.id_penerima" class="badge bg-secondary text-white" style="font-size: 0.7rem;">
+                          {{ penerima.nama_penerima }} <span class="fw-bold text-warning ms-1">({{ getPortionCode(item.nama_jenis_porsi) }}={{ penerima.jumlah_porsi }})</span>
+                        </span>
+                      </div>
+                   </div>
+                   <span v-else class="text-muted">-</span>
                 </td>
                 <td>
                   <div class="nutrisi-aktual" v-if="hasNutritionalData(item.gizi_aktual)">
@@ -840,6 +863,85 @@
       @close="showSelectorModal = false"
       @select="handleNutritionSelect"
     />
+    </div>
+    <!-- End of Main Content -->
+
+    <!-- Printable Section -->
+    <div id="print-area" class="print-only">
+        <div class="print-header text-center">
+            <h2 class="mb-1">{{ sppgData.nama_sppg || 'SPPG - Satuan Pelayanan Pemenuhan Gizi' }}</h2>
+            <h3 class="mb-2">Jadwal Distribusi Makanan</h3>
+            <p class="mb-0" v-if="filters.tanggal_start && filters.tanggal_end">
+                Periode: {{ formatDate(filters.tanggal_start) }} - {{ formatDate(filters.tanggal_end) }}
+            </p>
+            <p class="mb-0" v-else-if="filters.tanggal_start">
+                Tanggal: {{ formatDate(filters.tanggal_start) }}
+            </p>
+        </div>
+
+        <div v-for="(mealGroups, date) in printGroupedData" :key="date" class="mb-4">
+            <h4 class="border-bottom border-dark pb-1">{{ formatDate(date) }}</h4>
+            
+            <div v-for="(menus, mealType) in mealGroups" :key="mealType" class="mb-4">
+                <!-- Removed meal time header as requested -->
+                
+                <div v-for="menu in menus" :key="menu.id_menu" class="mb-3 ps-2">
+                   <div class="d-flex justify-content-between align-items-center mb-1">
+                       <span class="fw-bold">{{ menu.nama_menu }}</span>
+                       <span class="badge border border-dark text-dark">
+                           {{ formatNumber(menu.total_porsi) }} Porsi
+                           <span v-if="menu.porsi_besar > 0"> (B={{ menu.porsi_besar }}</span><span v-if="menu.porsi_sedang > 0"><span v-if="menu.porsi_besar > 0">, </span>S={{ menu.porsi_sedang }}</span><span v-if="menu.porsi_kecil > 0"><span v-if="menu.porsi_besar > 0 || menu.porsi_sedang > 0">, </span>K={{ menu.porsi_kecil }}</span><span v-if="menu.porsi_besar > 0 || menu.porsi_sedang > 0 || menu.porsi_kecil > 0">)</span>
+                       </span>
+                   </div>
+                   
+                   <table class="print-table">
+                       <thead>
+                           <tr>
+                               <th style="width: 5%">No</th>
+                               <th style="width: 40%">Penerima Manfaat</th>
+                               <th style="width: 15%">Jenis Porsi</th>
+                               <th style="width: 10%">Qty</th>
+                               <th style="width: 15%">Serah Terima</th>
+                               <th style="width: 15%">Ket</th>
+                           </tr>
+                       </thead>
+                       <tbody>
+                           <tr v-for="(item, idx) in menu.items" :key="item.id_distribusi">
+                               <td class="text-center">{{ idx + 1 }}</td>
+                               <td>
+                                   <div v-for="p in item.penerima_manfaat" :key="p.id_penerima" class="mb-1">
+                                       {{ p.nama_penerima }}
+                                   </div>
+                               </td>
+                               <td class="text-center">{{ getPortionCode(item.nama_jenis_porsi) }}</td>
+                               <td class="text-center">
+                                   <!-- Sum quantity for the row? Or check if list -->
+                                    <div v-for="p in item.penerima_manfaat" :key="'q'+p.id_penerima" class="mb-1">
+                                       {{ p.jumlah_porsi }}
+                                   </div>
+                               </td>
+                               <td></td> <!-- Checkbox area -->
+                               <td>{{ item.catatan }}</td>
+                           </tr>
+                       </tbody>
+                   </table>
+                </div>
+            </div>
+            <div class="page-break"></div>
+        </div>
+        
+        <!-- Footer / Signature -->
+        <div class="mt-5 d-flex justify-content-between px-5">
+            <div class="text-center">
+                <p class="mb-5">Petugas Distribusi</p>
+                <p class="fw-bold">( ............................. )</p>
+            </div>
+            <div class="text-center">
+                <p class="mb-5">Mengetahui</p>
+                <p class="fw-bold">( ............................. )</p>
+            </div>
+        </div>
+    </div>
   </div>
 </template>
 
@@ -849,11 +951,16 @@ import menuService from '@/services/menuService'
 import bahanBakuService from '@/services/bahanBakuService'
 import { useToast } from 'vue-toastification'
 import KomposisiPanganSelectorModal from '@/components/KomposisiPanganSelectorModal.vue'
+import api from '@/services/api'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
+import html2pdf from 'html2pdf.js'
 
 export default {
   name: 'DistribusiMakananView',
   components: {
-    KomposisiPanganSelectorModal
+    KomposisiPanganSelectorModal,
+    vSelect
   },
   setup() {
     const toast = useToast()
@@ -875,6 +982,11 @@ export default {
       selectedIngredientIndex: null,
       distribusiList: [],
       penerimaList: [],
+      // Plan related data
+      shoppingPlans: [],
+      selectedPlanId: null,
+      plannedDistributions: [],
+      
       menuList: [],
       pegawaiList: [],
       jenisPorsiList: [],
@@ -893,7 +1005,7 @@ export default {
         tanggal_end: ''
       },
       form: {
-        id_penerima: '',
+
         id_menu: '',
         id_jenis_porsi: '',
         id_pegawai: '',
@@ -909,7 +1021,8 @@ export default {
         catatan: ''
       },
       errors: {},
-      searchTimeout: null
+      searchTimeout: null,
+      sppgData: {}
     }
   },
   computed: {
@@ -919,9 +1032,7 @@ export default {
     selectedJenisPorsi() {
       return this.jenisPorsiList.find(jenis => jenis.id_jenis_porsi === this.form.id_jenis_porsi)
     },
-    selectedPenerima() {
-      return this.penerimaList.find(penerima => penerima.id_penerima === this.form.id_penerima)
-    },
+
     nutritionalInfo() {
       if (!this.selectedMenu || !this.selectedJenisPorsi) {
         return {
@@ -949,7 +1060,6 @@ export default {
       if (this.filters.search) {
         const searchTerm = this.filters.search.toLowerCase()
         filtered = filtered.filter(item =>
-          item.nama_penerima?.toLowerCase().includes(searchTerm) ||
           item.nama_menu?.toLowerCase().includes(searchTerm) ||
           item.nama_pegawai?.toLowerCase().includes(searchTerm)
         )
@@ -980,10 +1090,86 @@ export default {
     totalPages() {
       return Math.ceil(this.filteredData.length / this.perPage)
     },
+    printGroupedData() {
+        // Group filtered data by Date -> Meal Time -> Menu
+        const grouped = {}
+        const sortedData = [...this.filteredData].sort((a, b) => {
+            // Sort by Date, then by Meal order
+            const dateA = new Date(a.tanggal_distribusi)
+            const dateB = new Date(b.tanggal_distribusi)
+            if (dateA - dateB !== 0) return dateA - dateB
+            
+            const mealOrder = { 'sarapan': 1, 'snack': 2, 'makan_siang': 3, 'makan_malam': 4 }
+            return (mealOrder[a.waktu_makan] || 99) - (mealOrder[b.waktu_makan] || 99)
+        })
+
+        sortedData.forEach(item => {
+            const date = item.tanggal_distribusi ? item.tanggal_distribusi.substring(0, 10) : 'Unknown'
+            if (!grouped[date]) grouped[date] = {}
+            
+            const meal = item.waktu_makan
+            if (!grouped[date][meal]) grouped[date][meal] = []
+            
+            // Check if menu group already exists
+            let menuGroup = grouped[date][meal].find(g => g.id_menu === item.id_menu)
+            if (!menuGroup) {
+                menuGroup = {
+                    id_menu: item.id_menu,
+                    nama_menu: item.nama_menu,
+                    total_porsi: 0,
+                    porsi_besar: 0,
+                    porsi_sedang: 0,
+                    porsi_kecil: 0,
+                    items: [] // List of distributions (beneficiaries)
+                }
+                grouped[date][meal].push(menuGroup)
+            }
+            
+            // Add to total and breakdown by portion type
+            menuGroup.total_porsi += item.jumlah_porsi
+            
+            const porsiName = (item.nama_jenis_porsi || '').toLowerCase()
+            if (porsiName.includes('besar')) {
+                menuGroup.porsi_besar += item.jumlah_porsi
+            } else if (porsiName.includes('sedang')) {
+                menuGroup.porsi_sedang += item.jumlah_porsi
+            } else if (porsiName.includes('kecil')) {
+                menuGroup.porsi_kecil += item.jumlah_porsi
+            }
+            
+            menuGroup.items.push(item)
+        })
+        
+        return grouped
+    },
     paginatedData() {
       const start = (this.currentPage - 1) * this.perPage
       const end = start + this.perPage
       return this.filteredData.slice(start, end)
+    },
+    printTotalBreakdown() {
+        // Calculate grand total breakdown for print
+        const totals = {
+            total: 0,
+            besar: 0,
+            sedang: 0,
+            kecil: 0
+        }
+        
+        this.filteredData.forEach(item => {
+            totals.total += item.jumlah_porsi || 0
+            
+            const porsiName = (item.nama_jenis_porsi || '').toLowerCase()
+            if (porsiName.includes('besar')) {
+                totals.besar += item.jumlah_porsi || 0
+            } else if (porsiName.includes('sedang')) {
+                totals.sedang += item.jumlah_porsi || 0
+            } else if (porsiName.includes('kecil')) {
+                totals.kecil += item.jumlah_porsi || 0
+            }
+        })
+        
+        return totals
     },
     visiblePages() {
       const delta = 2
@@ -1028,12 +1214,33 @@ export default {
 
       this.calculatorData.ingredients.forEach(bahan => {
         if (bahan.included && bahan.komposisi_pangan) {
-          // Requirement: Ignore weight, use raw values directly
-          totals.kalori += Number(bahan.komposisi_pangan.energi_kal) || 0
-          totals.protein += Number(bahan.komposisi_pangan.protein_g) || 0
-          totals.lemak += Number(bahan.komposisi_pangan.lemak_g) || 0
-          totals.karbohidrat += Number(bahan.komposisi_pangan.kh_g) || 0
-          totals.serat += Number(bahan.komposisi_pangan.serat_g) || 0
+          // If we have 'berat_bersih' (from Plan) or just 'jumlah_bahan' (Standard), use it.
+          // Note: In fillFromPlan we mapped berat_bersih -> jumlah_bahan for consistency in UI.
+          // Formula: (Weight / 100) * ValuePer100g
+          
+          let weight = Number(bahan.jumlah_bahan) || 0
+          
+          // Optimization: If NOT from plan (Standard), maybe we just sum raw values? 
+          // Previous code summed raw values. But "Weight/100 * Content" is universal if weight is in grams.
+          // Let's assume standard recipe also uses grams.
+          
+          // However, previous code was: totals.kalori += Number(bahan.komposisi_pangan.energi_kal)
+          // This implies the standard API might return PRE-CALCULATED values per portion? 
+          // No, Composition is usually per 100g. If previous code summed raw, it might have been wrong or simplified.
+          // User request: "perhitungan kalkulator dari net/100 * kandungan".
+          // So we MUST apply formula.
+          
+         // Check if we should apply formula or raw sum. 
+         // If generic load, maybe we stick to raw sum if weight isn't reliable?
+         // But let's apply the formula as requested for better accuracy.
+         
+          const factor = weight / 100
+          
+          totals.kalori += (Number(bahan.komposisi_pangan.energi_kal) || 0) * factor
+          totals.protein += (Number(bahan.komposisi_pangan.protein_g) || 0) * factor
+          totals.lemak += (Number(bahan.komposisi_pangan.lemak_g) || 0) * factor
+          totals.karbohidrat += (Number(bahan.komposisi_pangan.kh_g) || 0) * factor
+          totals.serat += (Number(bahan.komposisi_pangan.serat_g) || 0) * factor
         }
       })
 
@@ -1049,25 +1256,20 @@ export default {
     }
   },
   watch: {
-    'form.id_penerima': {
-      handler(newId) {
-        if (newId && !this.isEdit) {
-          const selectedPenerima = this.penerimaList.find(p => p.id_penerima === newId)
-          if (selectedPenerima && selectedPenerima.jumlah_siswa) {
-            // Auto-fill hanya untuk ADD mode, tidak untuk EDIT mode
-            this.form.jumlah_porsi = selectedPenerima.jumlah_siswa
-            console.log(`📊 Auto-fill jumlah_porsi: ${selectedPenerima.jumlah_siswa} siswa dari ${selectedPenerima.nama_lembaga}`)
-          }
-        }
-      },
-      immediate: false // Tidak run immediately, biarkan edit mode yang handle
-    },
+
     distribusiList: {
       handler() {
         // Re-calculate summary when distribusi list changes
         this.loadSummaryData()
       },
       deep: true
+    },
+    selectedPlanId(newVal) {
+        if (newVal) {
+            this.loadPlanDetails()
+        } else {
+            this.plannedDistributions = []
+        }
     }
   },
   mounted() {
@@ -1083,7 +1285,9 @@ export default {
           this.loadMenu(),
           this.loadPegawai(),
           this.loadJenisPorsi(),
-          this.loadSummaryData()
+          this.loadShoppingPlans(),
+          this.loadSummaryData(),
+          this.loadSppgData()
         ])
 
         // Debug log untuk melihat data yang dimuat
@@ -1096,9 +1300,7 @@ export default {
           console.log('🔍 Item:', {
             id_distribusi: item.id_distribusi,
             nama_menu: item.nama_menu,
-            nama_penerima: item.nama_penerima,
             menu: item.menu,
-            penerima: item.penerimaManfaat
           })
         })
 
@@ -1116,7 +1318,15 @@ export default {
         const response = await distribusiMakananService.getAll()
         console.log('🔍 Raw Distribusi Response:', response)
         this.distribusiList = response.data || []
-        console.log('🔍 Distribusi List after assignment:', this.distribusiList)
+        
+        // Debug first item to see headers
+        if (this.distribusiList.length > 0) {
+            console.log('🔍 First Item Data:', {
+                id: this.distribusiList[0].id_distribusi,
+                penerima_manfaat: this.distribusiList[0].penerima_manfaat,
+                nama_menu: this.distribusiList[0].nama_menu
+            })
+        }
       } catch (error) {
         console.error('Error loading distribusi data:', error)
         this.toast.error('Gagal memuat data distribusi')
@@ -1149,6 +1359,29 @@ export default {
         this.toast.error('Gagal memuat data pegawai')
       }
     },
+     async loadShoppingPlans() {
+       try {
+          const res = await api.get('/calculator/plans')
+          if (res.data.success) {
+            this.shoppingPlans = res.data.data
+          }
+       } catch (err) {
+          console.error("Failed to load plans", err)
+       }
+    },
+    async loadSppgData() {
+        try {
+            const res = await api.get('/sppg')
+            if (res.data && res.data.success && res.data.data && res.data.data.length > 0) {
+                // Get the first SPPG record from the paginated response
+                this.sppgData = res.data.data[0]
+            }
+        } catch (err) {
+            console.error("Failed to load SPPG data", err)
+            // Use default if API fails
+            this.sppgData = { nama_sppg: 'SPPG - Satuan Pelayanan Pemenuhan Gizi' }
+        }
+    },
     async loadJenisPorsi() {
       try {
         const response = await distribusiMakananService.getJenisPorsi()
@@ -1158,6 +1391,125 @@ export default {
         this.toast.error('Gagal memuat data jenis porsi')
       }
     },
+    async loadPlanDetails() {
+       if (!this.selectedPlanId) {
+          this.plannedDistributions = []
+          return
+       }
+       
+       this.loadingPlan = true
+       try {
+           const res = await api.get(`/calculator/plans/${this.selectedPlanId}`)
+           if (!res.data.success) return
+           
+           const data = res.data.data
+           const plan = data.plan
+           const details = data.details // Raw details with berat_bersih
+           
+           // Group Details by Menu + Portion Type
+           const groups = {}
+           
+           details.forEach(d => {
+               // Only process items that are linked to a menu and portion
+               if (!d.id_menu || !d.id_jenis_porsi) return
+               
+               const key = `${d.id_menu}_${d.id_jenis_porsi}`
+               if (!groups[key]) {
+                   const menu = this.menuList.find(m => m.id_menu == d.id_menu)
+                   const porsi = this.jenisPorsiList.find(p => p.id_jenis_porsi == d.id_jenis_porsi)
+                   
+                   groups[key] = {
+                       id_unique: key,
+                       menu_id: d.id_menu,
+                       menu_name: menu ? menu.nama_menu : `Menu ${d.id_menu}`,
+                       portion_id: d.id_jenis_porsi,
+                       portion_name: porsi ? porsi.nama_jenis_porsi : `Porsi ${d.id_jenis_porsi}`,
+                       ingredients: [],
+                       quantity: 0
+                   }
+               }
+               
+               groups[key].ingredients.push({
+                   id_bahan_baku: d.id_bahan_baku,
+                   nama_bahan_baku: d.bahan_baku ? d.bahan_baku.nama_bahan_baku : 'Unknown', // Grab from relation
+                   berat_bersih: parseFloat(d.berat_bersih || 0),
+                   komposisi_pangan: d.bahan_baku ? d.bahan_baku.komposisi_pangan : null // Grab from relation
+               })
+           })
+           
+            // Calculate Quantity based on distribution map (beneficiary count x portion count)
+           const distMap = plan.distributions || {}
+           
+           const getIdPorsiByName = (name) => {
+                if (!this.jenisPorsiList) return null
+                const found = this.jenisPorsiList.find(p => p.nama_jenis_porsi.toLowerCase().includes(name.toLowerCase()))
+                return found ? found.id_jenis_porsi : null
+           }
+           const idKecil = getIdPorsiByName('kecil')
+           const idBesar = getIdPorsiByName('besar')
+           const idSedang = getIdPorsiByName('sedang')
+
+           for (const [key, group] of Object.entries(groups)) {
+               const beneficiaries = distMap[group.menu_id] || []
+               let totalQty = 0
+               
+               if (Array.isArray(beneficiaries)) {
+                    beneficiaries.forEach(bid => {
+                        const ben = this.penerimaList.find(b => b.id_penerima == bid)
+                        if (!ben) return
+                        
+                        // Check which portion type this Group is for
+                        if (group.portion_id == idBesar) {
+                            totalQty += Number(ben.porsi_besar || 0)
+                        } else if (group.portion_id == idKecil) {
+                            totalQty += Number(ben.porsi_kecil || 0)
+                        } else if (idSedang && group.portion_id == idSedang) {
+                            totalQty += Number(ben.porsi_sedang || 0)
+                        } 
+                    })
+                    
+                   if (totalQty === 0 && beneficiaries.length > 0) {
+                        // If no portion config found on beneficiary, default to 1 per beneficiary
+                        // But only if this Group matches some default logic? 
+                        // Let's just assume count = beneficiaries for robust fallback
+                         totalQty = beneficiaries.length 
+                   }
+               }
+
+               group.quantity = totalQty
+           }
+           
+           this.plannedDistributions = Object.values(groups)
+                      if (plan.tanggal_rencana && !this.isEdit) {
+                this.form.tanggal_distribusi = this.formatDateForInput(plan.tanggal_rencana)
+            }
+           
+       } catch (err) {
+           console.error("Failed to load plan details", err)
+           this.toast.error("Gagal memuat detail rencana")
+       } finally {
+           this.loadingPlan = false
+       }
+    },
+
+    async fillFromPlan(item) {
+        // 1. Set Menu & Portion
+        this.form.id_menu = item.menu_id
+        this.form.id_jenis_porsi = item.portion_id
+        
+        // 2. Set Default Quantity from Plan
+        this.form.jumlah_porsi = item.quantity > 0 ? item.quantity : 1
+                
+        // 3. Load Calculator with CUSTOM ingredients from Plan (Net Weight)
+        await this.loadCalculatorData(item.menu_id, item.ingredients)
+        
+        // 4. Auto-Apply properties to "Actual Nutrition"
+        setTimeout(() => {
+             this.applyCalculation() 
+             this.toast.info("Data nutrisi diisi otomatis sesuai gramasi rencana.")
+        }, 500)
+    },
+
     async saveForm() {
       this.saving = true
       this.errors = {}
@@ -1171,7 +1523,12 @@ export default {
           this.toast.success('Data distribusi berhasil diperbarui')
         } else {
           console.log('➕ Creating new distribusi')
-          response = await distribusiMakananService.create(this.form)
+          // Add selected plan ID to payload if available
+          const payload = {
+            ...this.form,
+            id_shopping_plan: this.selectedPlanId
+          }
+          response = await distribusiMakananService.create(payload)
           this.toast.success('Data distribusi berhasil ditambahkan')
         }
 
@@ -1192,10 +1549,12 @@ export default {
     },
     editItem(item) {
       console.log('🔧 Editing item:', item)
+      console.log('📅 Raw Date:', item.tanggal_distribusi)
       this.isEdit = true
       this.editId = item.id_distribusi
+      this.selectedPlanId = item.id_shopping_plan || null // Set plan ID
       this.form = {
-        id_penerima: item.id_penerima,
+
         id_menu: item.id_menu,
         id_jenis_porsi: item.id_jenis_porsi,
         id_pegawai: item.id_pegawai || '',
@@ -1218,6 +1577,13 @@ export default {
       }
       
       this.showAddForm = true
+      
+      // Scroll to form
+      this.$nextTick(() => {
+        if (this.$refs.formCard) {
+          this.$refs.formCard.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
     },
     async confirmDelete(item) {
       if (confirm(`Apakah Anda yakin ingin menghapus distribusi makanan untuk ${item.penerima?.nama_penerima}?`)) {
@@ -1239,7 +1605,7 @@ export default {
       this.editId = null
       this.showAddForm = false
       this.form = {
-        id_penerima: '',
+
         id_menu: '',
         id_jenis_porsi: '',
         id_pegawai: '',
@@ -1266,6 +1632,161 @@ export default {
       }
       this.currentPage = 1
       this.loadData()
+    },
+    async handlePrint() {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+        
+        if (isMobile) {
+            // For mobile, download as PDF
+            try {
+                this.toast.info('Sedang membuat PDF...', { timeout: 3000 })
+                
+                // Clone the print area to avoid CSS conflicts
+                const originalElement = document.getElementById('print-area')
+                const clonedElement = originalElement.cloneNode(true)
+                
+                // Remove print-only class and make it visible
+                clonedElement.classList.remove('print-only')
+                clonedElement.style.display = 'block'
+                clonedElement.style.position = 'absolute'
+                clonedElement.style.left = '-9999px'
+                clonedElement.style.top = '0'
+                clonedElement.style.width = '210mm' // A4 width
+                clonedElement.style.backgroundColor = '#ffffff'
+                clonedElement.id = 'print-area-clone'
+                
+                // Append to body
+                document.body.appendChild(clonedElement)
+                
+                // Wait for rendering
+                await this.$nextTick()
+                await new Promise(resolve => setTimeout(resolve, 500))
+                
+                const opt = {
+                    margin: 10,
+                    filename: `Jadwal-Distribusi-${new Date().toISOString().split('T')[0]}.pdf`,
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { 
+                        scale: 2, 
+                        useCORS: true,
+                        logging: true,
+                        backgroundColor: '#ffffff'
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                }
+                
+                await html2pdf().set(opt).from(clonedElement).save()
+                
+                // Remove cloned element
+                document.body.removeChild(clonedElement)
+                
+                this.toast.success('PDF berhasil didownload!')
+            } catch (error) {
+                console.error('PDF generation error:', error)
+                this.toast.error('Gagal membuat PDF: ' + error.message)
+                
+                // Clean up cloned element if exists
+                const clone = document.getElementById('print-area-clone')
+                if (clone) document.body.removeChild(clone)
+            }
+        } else {
+            // For desktop, try to open in new window for cleaner output
+            try {
+                const printContent = document.getElementById('print-area').innerHTML
+                const printWindow = window.open('', '_blank', 'width=800,height=600')
+                
+                if (!printWindow) {
+                    window.print()
+                    return
+                }
+                
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Jadwal Distribusi Makanan</title>
+                        <style>
+                            @page {
+                                margin: 0;
+                                size: auto;
+                            }
+                            body {
+                                font-family: Arial, sans-serif;
+                                margin: 1cm;
+                                padding: 0;
+                            }
+                            .print-header {
+                                border-bottom: 2px solid black;
+                                margin-bottom: 20px;
+                                padding-bottom: 10px;
+                                text-center: center;
+                            }
+                            .print-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                margin-bottom: 1rem;
+                            }
+                            .print-table th, .print-table td {
+                                border: 1px solid #000;
+                                padding: 5px;
+                                font-size: 11px;
+                                vertical-align: top;
+                            }
+                            .print-table th {
+                                background-color: #f0f0f0 !important;
+                                -webkit-print-color-adjust: exact;
+                                print-color-adjust: exact;
+                                text-align: center;
+                            }
+                            .text-center { text-align: center; }
+                            .mb-1 { margin-bottom: 0.25rem; }
+                            .mb-2 { margin-bottom: 0.5rem; }
+                            .mb-3 { margin-bottom: 1rem; }
+                            .mb-4 { margin-bottom: 1.5rem; }
+                            .ps-2 { padding-left: 0.5rem; }
+                            .fw-bold { font-weight: bold; }
+                            .border-bottom { border-bottom: 1px solid; }
+                            .border-dark { border-color: #000; }
+                            .pb-1 { padding-bottom: 0.25rem; }
+                            .d-flex { display: flex; }
+                            .justify-content-between { justify-content: space-between; }
+                            .align-items-center { align-items: center; }
+                            .badge { 
+                                display: inline-block;
+                                padding: 0.25em 0.6em;
+                                font-size: 0.75em;
+                                font-weight: 700;
+                                line-height: 1;
+                                text-align: center;
+                                white-space: nowrap;
+                                vertical-align: baseline;
+                                border-radius: 0.25rem;
+                            }
+                            .border { border: 1px solid; }
+                            .text-dark { color: #000; }
+                            .mt-5 { margin-top: 3rem; }
+                            .px-5 { padding-left: 3rem; padding-right: 3rem; }
+                            .mb-5 { margin-bottom: 3rem; }
+                        </style>
+                    </head>
+                    <body>
+                        ${printContent}
+                    </body>
+                    </html>
+                `)
+                
+                printWindow.document.close()
+                
+                printWindow.onload = function() {
+                    printWindow.focus()
+                    printWindow.print()
+                    printWindow.close()
+                }
+            } catch (error) {
+                console.error('Print window error:', error)
+                window.print()
+            }
+        }
     },
     sortBy(field) {
       if (this.sortByField === field) {
@@ -1294,17 +1815,20 @@ export default {
         this.calculatorData.ingredients = []
       }
     },
-    async loadCalculatorData(menuId) {
+    async loadCalculatorData(menuId, customIngredients = null) {
       this.calculatorData.loading = true
       this.calculatorData.ingredients = [] // Reset ingredients first
       try {
+        // 1. Always load Standard Recipe first to ensure we have the full list
         const response = await menuService.getById(menuId)
+        let standardIngredients = []
+        
         if (response.success && response.data.bahan_baku) {
-          this.calculatorData.ingredients = response.data.bahan_baku.map(bahan => ({
+           standardIngredients = response.data.bahan_baku.map(bahan => ({
             ...bahan,
-            included: true, // Default to included
-            // Ensure numeric values for calculation
+            included: true, 
             jumlah_bahan: Number(bahan.jumlah_bahan) || 0,
+            is_standard: true, // Flag to indicate from standard
             komposisi_pangan: bahan.komposisi_pangan ? {
               ...bahan.komposisi_pangan,
               energi_kal: Number(bahan.komposisi_pangan.energi_kal) || 0,
@@ -1314,8 +1838,59 @@ export default {
               serat_g: Number(bahan.komposisi_pangan.serat_g) || 0
             } : null
           }))
-          console.log('Ingredients loaded for calculator:', this.calculatorData.ingredients)
         }
+
+        if (customIngredients && customIngredients.length > 0) {
+             // 2. Merge/Override with Plan Data
+             // Create a map for quick lookup of standard ingredients
+             const ingredientMap = new Map(standardIngredients.map(i => [i.id_bahan_baku, i]))
+             
+             customIngredients.forEach(planItem => {
+                 const existing = ingredientMap.get(planItem.id_bahan_baku)
+                 const planWeight = Number(planItem.berat_bersih) || 0
+                 
+                 if (existing) {
+                     // Override weight with Plan's Net Weight
+                     existing.jumlah_bahan = planWeight
+                     existing.is_plan = true // Flag to show it matches plan
+                     
+                     // If plan has better nutrition data (unlikely but possible), could update here
+                     // But usually Standard Recipe has the master link. 
+                     // If Standard is missing link but Plan has it (via my fix), use Plan's
+                     if (!existing.komposisi_pangan && planItem.komposisi_pangan) {
+                         existing.komposisi_pangan = {
+                              ...planItem.komposisi_pangan,
+                              energi_kal: Number(planItem.komposisi_pangan.energi_kal) || 0,
+                              protein_g: Number(planItem.komposisi_pangan.protein_g) || 0,
+                              lemak_g: Number(planItem.komposisi_pangan.lemak_g) || 0,
+                              kh_g: Number(planItem.komposisi_pangan.kh_g) || 0,
+                              serat_g: Number(planItem.komposisi_pangan.serat_g) || 0
+                         }
+                     }
+                 } else {
+                     // Add extra ingredient from Plan that wasn't in Standard Recipe
+                     const newItem = {
+                        ...planItem,
+                        included: true,
+                        jumlah_bahan: planWeight,
+                        is_plan: true,
+                        is_standard: false, // Extra item
+                        komposisi_pangan: planItem.komposisi_pangan ? {
+                              ...planItem.komposisi_pangan,
+                              energi_kal: Number(planItem.komposisi_pangan.energi_kal) || 0,
+                              protein_g: Number(planItem.komposisi_pangan.protein_g) || 0,
+                              lemak_g: Number(planItem.komposisi_pangan.lemak_g) || 0,
+                              kh_g: Number(planItem.komposisi_pangan.kh_g) || 0,
+                              serat_g: Number(planItem.komposisi_pangan.serat_g) || 0
+                         } : null
+                     }
+                     standardIngredients.push(newItem)
+                 }
+             })
+        }
+        
+        this.calculatorData.ingredients = standardIngredients
+        
       } catch (error) {
         console.error('Error loading menu details for calculator:', error)
         this.toast.error('Gagal memuat detail bahan baku')
@@ -1331,17 +1906,30 @@ export default {
     },
     formatDate(dateString) {
       if (!dateString) return '-'
+      
+      // Parse date string manually to avoid timezone issues
+      // If it's YYYY-MM-DD format, parse it directly
+      if (typeof dateString === 'string' && dateString.match(/^\d{4}-\d{2}-\d{2}/)) {
+        const [year, month, day] = dateString.substring(0, 10).split('-')
+        return `${day}/${month}/${year}`
+      }
+      
+      // Fallback to Date object for other formats
       const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      })
+      const d = String(date.getDate()).padStart(2, '0')
+      const m = String(date.getMonth() + 1).padStart(2, '0')
+      const y = date.getFullYear()
+      return `${d}/${m}/${y}`
     },
     formatDateForInput(dateString) {
       if (!dateString) return this.getCurrentDate()
+      
       const date = new Date(dateString)
-      return date.toISOString().split('T')[0]
+      // Use local parts to ensure we get the same date as displayed in the table
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
     },
     formatNumber(num) {
       if (num === null || num === undefined || isNaN(num)) return 0
@@ -1362,12 +1950,30 @@ export default {
     },
     applyCalculation() {
       const totals = this.calculatedTotals
-      this.form.kalori_aktual = totals.kalori
-      this.form.protein_aktual = totals.protein
-      this.form.lemak_aktual = totals.lemak
-      this.form.karbohidrat_aktual = totals.karbohidrat
-      this.form.serat_aktual = totals.serat
+      // Round to 2 decimal places to avoid floating point errors
+      this.form.kalori_aktual = parseFloat(totals.kalori.toFixed(2))
+      this.form.protein_aktual = parseFloat(totals.protein.toFixed(2))
+      this.form.lemak_aktual = parseFloat(totals.lemak.toFixed(2))
+      this.form.karbohidrat_aktual = parseFloat(totals.karbohidrat.toFixed(2))
+      this.form.serat_aktual = parseFloat(totals.serat.toFixed(2))
       this.toast.success('Hasil perhitungan diterapkan ke formulir')
+    },
+    getCalculatedNutrition(bahan, type) {
+        if (!bahan.komposisi_pangan) return 0
+        
+        const weight = Number(bahan.jumlah_bahan) || 0
+        const factor = weight / 100
+        
+        let value = 0
+        switch (type) {
+            case 'kalori': value = Number(bahan.komposisi_pangan.energi_kal) || 0; break;
+            case 'protein': value = Number(bahan.komposisi_pangan.protein_g) || 0; break;
+            case 'lemak': value = Number(bahan.komposisi_pangan.lemak_g) || 0; break;
+            case 'karbohidrat': value = Number(bahan.komposisi_pangan.kh_g) || 0; break;
+            case 'serat': value = Number(bahan.komposisi_pangan.serat_g) || 0; break;
+        }
+        
+        return value * factor
     },
     hasNutritionalData(giziAktual) {
       return giziAktual && (
@@ -1377,6 +1983,14 @@ export default {
         (giziAktual.lemak_aktual && giziAktual.lemak_aktual > 0) ||
         (giziAktual.serat_aktual && giziAktual.serat_aktual > 0)
       )
+    },
+    getPortionCode(name) {
+      if (!name) return '?'
+      const lower = name.toLowerCase()
+      if (lower.includes('besar')) return 'B'
+      if (lower.includes('sedang')) return 'S'
+      if (lower.includes('kecil')) return 'K'
+      return '?'
     },
     async loadSummaryData() {
       if (!this.summaryDate) {
@@ -1639,5 +2253,71 @@ export default {
   background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+@media print {
+  /* Hide non-print content */
+  .no-print {
+    display: none !important;
+  }
+  
+  /* Show print content */
+  .print-only {
+    display: block !important;
+    visibility: visible !important;
+    position: static !important;
+  }
+  
+  /* Hide browser default header and footer */
+  @page {
+    margin: 0;
+    size: auto;
+  }
+  
+  /* Reset background per page */
+  body {
+    background: white;
+    margin: 1cm;
+  }
+  
+  .page-break {
+    page-break-after: always;
+  }
+  
+  .print-header {
+      border-bottom: 2px solid black;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+  }
+  
+  .print-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+  }
+  
+  .print-table th, .print-table td {
+      border: 1px solid #000;
+      padding: 5px;
+      font-size: 11px;
+      vertical-align: top;
+  }
+  
+  .print-table th {
+      background-color: #f0f0f0 !important;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+      text-align: center;
+  }
+
+  /* Hide sidebar and navbar */
+  .sidebar, .navbar, .header, header, nav, footer, 
+  .app-sidebar, .app-header, .app-footer {
+      display: none !important;
+  }
+}
+
+.print-only {
+  display: none;
 }
 </style>

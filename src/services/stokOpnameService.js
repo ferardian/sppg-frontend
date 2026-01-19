@@ -70,7 +70,7 @@ const stokOpnameService = {
   // Get bahan baku with current stock
   async getBahanBakuStock() {
     try {
-      const response = await apiClient.get('/bahan-baku')
+      const response = await apiClient.get('/bahan-baku', { params: { per_page: 9999 } })
       console.log('Raw bahan-baku response:', response)
 
       // Transform data to include stok from stok_akhir of latest transaction
@@ -106,7 +106,7 @@ const stokOpnameService = {
       console.error('Error details:', error.response?.data)
       // Fallback to regular getBahanBaku
       try {
-        const response = await apiClient.get('/bahan-baku')
+        const response = await apiClient.get('/bahan-baku', { params: { per_page: 9999 } })
         const bahanBaku = response.data?.data || response.data || []
         if (!Array.isArray(bahanBaku)) {
           return { data: [] }

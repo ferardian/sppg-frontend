@@ -207,32 +207,40 @@
             </div>
             <div class="col-md-3 mb-3">
               <label class="form-label">Pelaksana</label>
-              <select v-model="form.id_pegawai" class="form-select">
-                <option value="">Pilih Pegawai</option>
-                <option
-                  v-for="pegawai in pegawaiList"
-                  :key="pegawai.id_pegawai"
-                  :value="pegawai.id_pegawai"
-                >
-                  {{ pegawai.nama_lengkap }}
-                </option>
-              </select>
+              <v-select
+                v-model="form.id_pegawai"
+                :options="pegawaiList"
+                :reduce="pegawai => pegawai.id_pegawai"
+                label="nama_lengkap"
+                placeholder="Pilih Pegawai"
+                class="bg-white"
+              >
+                <template #no-options="{ search, searching }">
+                  <template v-if="searching">
+                    Tidak ada hasil untuk <em>{{ search }}</em>.
+                  </template>
+                  <em v-else style="opacity: 0.5">Ketik untuk mencari pegawai...</em>
+                </template>
+              </v-select>
             </div>
           </div>
 
           <div class="row">
             <div class="col-md-6 mb-3">
               <label class="form-label">Bahan Baku *</label>
-              <select v-model="form.id_bahan_baku" class="form-select" @change="onBahanBakuChange" required>
-                <option value="">Pilih Bahan Baku</option>
-                <option
-                  v-for="bahan in bahanBakuList"
-                  :key="bahan.id_bahan_baku"
-                  :value="bahan.id_bahan_baku"
-                >
-                  {{ bahan.nama_bahan_baku }} (Stok: {{ bahan.stok }} {{ bahan.satuan?.nama_satuan || '' }})
-                </option>
-              </select>
+              <v-select
+                v-model="form.id_bahan_baku"
+                :options="bahanBakuList"
+                :reduce="option => option.id_bahan_baku"
+                label="nama_bahan_baku"
+                placeholder="Pilih Bahan Baku"
+                @option:selected="onBahanBakuChange"
+                :clearable="false"
+              >
+                <template #option="{ nama_bahan_baku, stok, satuan }">
+                  {{ nama_bahan_baku }} (Stok: {{ stok }} {{ satuan?.nama_satuan || '' }})
+                </template>
+              </v-select>
             </div>
             <div class="col-md-2 mb-3">
               <label class="form-label">Jumlah *</label>
@@ -391,6 +399,8 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import stokOpnameService from '@/services/stokOpnameService'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
 
 const toast = useToast()
 
@@ -700,6 +710,10 @@ watch(() => form.value.tanggal_transaksi, () => {
 
 watch(() => form.value.jenis_transaksi, () => {
   generateNomorTransaksi()
+  onBahanBakuChange()
+})
+
+watch(() => form.value.id_bahan_baku, () => {
   onBahanBakuChange()
 })
 

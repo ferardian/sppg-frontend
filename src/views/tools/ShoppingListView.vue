@@ -12,51 +12,52 @@
     <!-- Saved Plans List -->
     <div class="card mb-4">
       <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 text-primary">
-          <i class="bi bi-clock-history me-2"></i>Riwayat Rencana Belanja
-        </h5>
-        <button class="btn btn-sm btn-outline-secondary" @click="loadPlans">
-          <i class="bi bi-arrow-clockwise me-1"></i>Refresh
-        </button>
+        <h5 class="mb-0 text-primary"><i class="bi bi-clock-history me-2"></i>Riwayat Rencana Belanja</h5>
+        <div class="input-group input-group-sm w-auto">
+           <input type="text" class="form-control" placeholder="Cari rencana..." v-model="searchPlan">
+           <button class="btn btn-outline-secondary"><i class="bi bi-search"></i></button>
+        </div>
       </div>
       <div class="card-body p-0">
-        <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-          <table class="table table-hover mb-0 align-middle">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
               <thead class="table-light">
-                <tr>
-                   <th>Tanggal Rencana</th>
-                   <th>Menu</th>
-                   <th>Keterangan</th>
-                   <th>Waktu Dibuat</th>
-                   <th class="text-center">Aksi</th>
-                </tr>
+                 <tr>
+                    <th>Tanggal</th>
+                    <th>Menu</th>
+                    <th>Keterangan</th>
+                    <th>Waktu Dibuat</th>
+                    <th class="text-center">Aksi</th>
+                 </tr>
               </thead>
               <tbody>
-                <tr v-for="plan in planList" :key="plan.id_shopping_plan" :class="{'table-info': editPlanId === plan.id_shopping_plan}">
+                 <tr v-for="plan in filteredPlans" :key="plan.id_shopping_plan" class="cursor-pointer" :class="{'table-active': editPlanId === plan.id_shopping_plan}">
                    <td>{{ formatDate(plan.tanggal_rencana) }}</td>
                    <td>
-                      <div v-if="plan.nama_menu && plan.nama_menu.includes('|||')">
-                         <ul class="mb-0 ps-3 text-start">
-                            <li v-for="(m, i) in plan.nama_menu.split('|||')" :key="i" class="mb-1">
-                               <span class="badge bg-info text-dark text-wrap text-start">{{ m }}</span>
-                            </li>
-                         </ul>
+                      <div class="d-flex flex-wrap gap-1">
+                          <span v-for="(menu, idx) in getPlanMenuList(plan)" :key="idx" class="badge bg-info text-dark">
+                              {{ menu }}
+                          </span>
+                          <span v-if="!getPlanMenuList(plan).length" class="text-muted">-</span>
                       </div>
-                      <span v-else-if="plan.nama_menu" class="badge bg-info text-dark">
-                        {{ plan.nama_menu }}
-                      </span>
-                      <span v-else class="text-muted small">-</span>
                    </td>
                    <td>{{ plan.keterangan || '-' }}</td>
                    <td>{{ formatTime(plan.created_at) }}</td>
                    <td class="text-center">
                    <button 
-                      class="btn btn-sm me-2" 
+                      class="btn btn-sm me-1" 
                       :class="editPlanId === plan.id_shopping_plan ? 'btn-primary' : 'btn-outline-primary'"
                       @click="selectPlan(plan.id_shopping_plan)"
                    >
                       <i class="bi" :class="editPlanId === plan.id_shopping_plan ? 'bi-pencil-fill' : 'bi-pencil'"></i>
                       {{ editPlanId === plan.id_shopping_plan ? 'Sedang Diedit' : 'Edit' }}
+                   </button>
+                   <button 
+                      class="btn btn-sm btn-outline-success me-1" 
+                      @click="exportPlan(plan.id_shopping_plan)"
+                      title="Export Excel"
+                   >
+                      <i class="bi bi-file-earmark-excel"></i>
                    </button>
                    <button 
                       class="btn btn-sm btn-outline-danger" 
@@ -68,7 +69,7 @@
                 </td>
               </tr>
               <tr v-if="planList.length === 0">
-                 <td colspan="4" class="text-center py-4 text-muted">Belum ada data rencana belanja.</td>
+                 <td colspan="5" class="text-center py-4 text-muted">Belum ada data rencana belanja.</td>
               </tr>
             </tbody>
           </table>
@@ -86,31 +87,23 @@
           </h5>
           <div class="d-flex flex-column flex-md-row gap-2 w-100 w-md-auto">
              <!-- Import Menu Button -->
-             <div class="dropdown w-100 w-md-auto" :class="{ 'show': menuDropdownOpen }">
-                <button 
-                  class="btn btn-outline-secondary dropdown-toggle d-flex justify-content-between align-items-center mb-0 w-100 w-md-auto" 
-                  type="button" 
-                  @click="menuDropdownOpen = !menuDropdownOpen"
-                  :aria-expanded="menuDropdownOpen"
-                  style="min-width: 0;"
+             <div class="w-100" style="min-width: 300px;">
+                <v-select
+                  multiple
+                  v-model="selectedImportMenuIds"
+                  :options="menuList"
+                  :reduce="menu => menu.id_menu"
+                  label="nama_menu"
+                  placeholder="-- Pilih Menu (Ketik untuk mencari) --"
+                  class="bg-white"
                 >
-                  {{ selectedImportMenuIds.length ? selectedImportMenuIds.length + ' Menu Dipilih' : '-- Pilih Menu --' }}
-                </button>
-                <ul class="dropdown-menu p-2" :class="{ 'show': menuDropdownOpen }" style="max-height: 300px; overflow-y: auto; display: block; width: 300px;" v-if="menuDropdownOpen">
-                  <li v-for="m in menuList" :key="m.id_menu" class="mb-1">
-                    <div class="px-2 py-1 rounded hover-bg d-flex align-items-center gap-2" @click.stop>
-                      <input class="form-check-input mt-0" type="checkbox" :value="m.id_menu" v-model="selectedImportMenuIds" :id="'menu-chk-'+m.id_menu" style="cursor: pointer;">
-                      <label class="form-check-label w-100" :for="'menu-chk-'+m.id_menu" style="cursor: pointer;">
-                        {{ m.nama_menu }}
-                      </label>
-                    </div>
-                  </li>
-                  <li v-if="menuList.length === 0" class="text-center text-muted py-2">
-                     Tidak ada menu
-                  </li>
-                </ul>
-                <!-- Overlay -->
-                 <div v-if="menuDropdownOpen" @click="menuDropdownOpen = false" style="position: fixed; top:0; left:0; width:100%; height:100%; z-index: 900;"></div>
+                  <template #no-options="{ search, searching }">
+                    <template v-if="searching">
+                      Tidak ada hasil untuk <em>{{ search }}</em>.
+                    </template>
+                    <em v-else style="opacity: 0.5">Mulai ketik untuk mencari menu...</em>
+                  </template>
+                </v-select>
              </div>
              <button class="btn btn-outline-success" type="button" @click="importFromMenu" :disabled="selectedImportMenuIds.length === 0">
                 <i class="bi bi-box-arrow-in-down me-1"></i>Impor
@@ -203,14 +196,19 @@
     </div>
 
     <!-- Planning Form -->
-    <div class="card mb-4">
+    <div class="card mb-4" v-if="showPlanTable">
       <div class="card-header bg-white d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center">
         <h5 class="mb-0 w-100 w-md-auto">
            Rencana Menu 
            <span v-if="uniqueImportedMenus.length > 0" class="badge bg-info text-dark ms-2 text-start d-inline-block align-middle">
               <ul class="list-unstyled mb-0 d-inline-block text-start align-middle">
-                 <li v-for="menu in uniqueImportedMenus" :key="menu.id_menu">
-                    <i class="bi bi-journal-text me-1"></i> {{ menu.nama_menu }}
+                 <li v-for="menu in uniqueImportedMenus" :key="menu.id_menu" class="mb-1">
+                    <span class="d-flex align-items-center">
+                        <i class="bi bi-journal-text me-1"></i> {{ menu.nama_menu }}
+                        <button class="btn btn-danger btn-xs ms-2 py-0 px-2" style="font-size: 0.75rem;" @click="removeMenu(menu.id_menu)" title="Hapus Menu ini dari Rencana">
+                            <i class="bi bi-trash-fill"></i> Hapus
+                        </button>
+                    </span>
                  </li>
               </ul>
            </span>
@@ -219,9 +217,7 @@
             <button class="btn btn-outline-secondary btn-sm flex-grow-1 flex-md-grow-0" @click="showDistribusi = !showDistribusi" v-if="uniqueImportedMenus.length > 0">
                <i class="bi bi-people-fill me-1"></i>Distribusi Menu
             </button>
-            <button class="btn btn-outline-primary btn-sm flex-grow-1 flex-md-grow-0" @click="addRow">
-              <i class="bi bi-plus-lg me-1"></i>Tambah Baris
-            </button>
+
         </div>
       </div>
       
@@ -262,6 +258,11 @@
       </div>
 
       <div class="card-body">
+        <div class="d-flex justify-content-end mb-2">
+            <button class="btn btn-outline-primary btn-sm" @click="addRow">
+              <i class="bi bi-plus-lg me-1"></i>Tambah Baris
+            </button>
+        </div>
         <div class="table-responsive">
           <table class="table table-bordered align-middle table-sm" style="font-size: 0.9em;">
             <thead class="table-light text-center align-middle">
@@ -292,14 +293,37 @@
               <tr v-for="(item, index) in items" :key="index">
 
                 <td>
-                  <select class="form-select form-select-sm" v-model="item.id_bahan_baku" @change="onIngredientSelect(item)" required>
-                    <option value="" disabled>Pilih Bahan</option>
-                    <option v-for="bahan in bahanBakuList" :key="bahan.id_bahan_baku" :value="bahan.id_bahan_baku">
-                      {{ bahan.nama_bahan_baku }}
-                    </option>
-                  </select>
-                  <div class="text-muted text-xs mt-1" v-if="item.bdd && item.bdd != 100">BDD: {{ item.bdd }}%</div>
+                  <div class="d-flex align-items-center gap-2">
+                     <select class="form-select form-select-sm" v-model="item.id_bahan_baku" @change="onIngredientSelect(item)" required>
+                        <option value="" disabled>Pilih Bahan</option>
+                        <option v-for="bahan in bahanBakuList" :key="bahan.id_bahan_baku" :value="bahan.id_bahan_baku">
+                           {{ bahan.nama_bahan_baku }}
+                        </option>
+                     </select>
+
+                  </div>
+                  <div class="d-flex justify-content-between align-items-center mt-1">
+                     <div class="text-muted text-xs" v-if="item.bdd && item.bdd != 100">BDD: {{ item.bdd }}%</div>
+                     <div class="form-check form-switch m-0" title="Mode Bulk (Total Langsung)">
+                        <input class="form-check-input" type="checkbox" v-model="item.is_bulk" @change="item.buffer_percent = item.is_bulk ? 0 : 3">
+                        <label class="form-check-label text-xs text-primary" v-if="item.is_bulk">Bulk</label>
+                     </div>
+                  </div>
                 </td>
+
+                <!-- Bulk Layout -->
+                <template v-if="item.is_bulk">
+                   <td colspan="8" class="align-middle text-center bg-light">
+                      <div class="input-group input-group-sm w-50 mx-auto">
+                        <span class="input-group-text">Total Kebutuhan</span>
+                        <input type="number" class="form-control text-center fw-bold" v-model.number="item.total_bulk" placeholder="0">
+                        <span class="input-group-text">{{ getUnit(item.id_bahan_baku) }}</span>
+                      </div>
+                   </td>
+                </template>
+
+                <!-- Normal Portion Layout -->
+                <template v-else>
 
                 <!-- Porsi Kecil -->
                 <td class="bg-success bg-opacity-10">
@@ -329,6 +353,8 @@
                    {{ calcNeed(item.bb_b, item.jml_b, item.id_bahan_baku) }}
                 </td>
 
+                </template>
+
                 <!-- Totals -->
                 <td class="text-end fw-bold bg-light">
                    {{ calculateRowTotal(item) }}
@@ -354,21 +380,27 @@
             <span v-if="loading">Menyimpan...</span>
             <span v-else>Simpan Rencana</span>
           </button>
-       </div>
-    </div>
+  </div>
+  </div>
   </div>
   </div>
 </template>
 
+
 <script>
 import api from '@/services/api'
 import distribusiMakananService from '@/services/distribusiMakananService'
-import bahanBakuService from '@/services/bahanBakuService'
 import penerimaManfaatService from '@/services/penerimaManfaatService'
 import { useToast } from 'vue-toastification'
+import vSelect from 'vue-select'
+import 'vue-select/dist/vue-select.css'
+import * as XLSX from 'xlsx'
 
 export default {
   name: 'ShoppingListView',
+  components: {
+    vSelect
+  },
   setup() {
     const toast = useToast()
     return { toast }
@@ -376,13 +408,14 @@ export default {
   data() {
     return {
       loading: false,
+      searchPlan: '',
       editPlanId: '',
       selectedImportMenuIds: [],
       menuDropdownOpen: false,
       planList: [],
       form: {
          id_shopping_plan: null,
-         tanggal_rencana: new Date().toISOString().split('T')[0],
+         tanggal_rencana: new Date().toLocaleDateString('sv-SE'),
          keterangan: '',
          penerima_ids: []
       },
@@ -398,21 +431,39 @@ export default {
           id_bahan_baku: '',
           berat_bersih: 0,
           berat_kotor: 0,
-          buffer_percent: 5,
-          bdd: 100
+          buffer_percent: 3,
+          bdd: 100,
+          is_bulk: false,
+          total_bulk: 0
         }
       ],
       results: [],
       // Map of menu_id -> [penerima_ids]
       menuBeneficiaryMap: {},
       isEditing: false, 
-      showDistribusi: true
+      showDistribusi: true,
+      showPlanTable: false
     }
   },
   computed: {
+    filteredPlans() {
+        if (!this.searchPlan) return this.planList
+        const lower = this.searchPlan.toLowerCase()
+        return this.planList.filter(p => {
+            const date = p.tanggal_rencana || ''
+            const note = (p.keterangan || '').toLowerCase()
+            const menus = (p.nama_menu || '').toLowerCase()
+            return date.includes(lower) || note.includes(lower) || menus.includes(lower)
+        })
+    },
     isValid() {
-      // Menu is optional, Bahan is required, Weights required (check > 0)
-      return this.items.every(i => i.id_bahan_baku && (i.bk_k > 0 || i.bk_b > 0))
+      // Menu is optional, Bahan is required
+      // If bulk: total_bulk > 0. If portion: weights > 0
+      return this.items.every(i => {
+         if (!i.id_bahan_baku) return false
+         if (i.is_bulk) return i.total_bulk > 0
+         return (i.bk_k > 0 || i.bk_b > 0)
+      })
     },
     totalPortions() {
       if (!this.form.penerima_ids.length) return null
@@ -525,6 +576,14 @@ export default {
     await this.loadPlans()
   },
   methods: {
+      getPlanMenuList(plan) {
+         if (!plan.nama_menu) return []
+         if (plan.nama_menu.includes('|||')) {
+             return plan.nama_menu.split('|||').map(s => s.trim())
+         }
+         // Fallback for comma separated
+         return plan.nama_menu.split(',').map(s => s.trim())
+      },
      formatDate(date) {
        if (!date) return '-'
        return new Date(date).toLocaleDateString('id-ID', {
@@ -612,6 +671,107 @@ export default {
           this.loading = false
        }
     },
+    async exportPlan(id) {
+       this.loading = true
+       try {
+          const res = await api.get(`/calculator/plans/${id}`)
+          if (!res.data.success) throw new Error(res.data.message)
+          
+          const data = res.data.data
+          const plan = data.plan
+          const details = data.details || []
+          
+          // Reconstruct Items (Same logic as loadPlanForEdit essentially)
+          const grouped = {}
+          const getIdPorsi = (name) => {
+             if (!this.jenisPorsiList) return null
+             const found = this.jenisPorsiList.find(p => p.nama_jenis_porsi.toLowerCase().includes(name.toLowerCase()))
+             return found ? found.id_jenis_porsi : null
+          }
+          const idKecil = getIdPorsi('kecil')
+          const idBesar = getIdPorsi('besar')
+
+          details.forEach(d => {
+              const isBulk = (d.id_jenis_porsi == null) 
+              const key = `${d.id_menu || ''}_${d.id_bahan_baku}_${isBulk ? 'bulk' : 'portion'}`
+              
+              if (!grouped[key]) {
+                  const bahan = this.bahanBakuList.find(b => b.id_bahan_baku === d.id_bahan_baku)
+                   grouped[key] = {
+                      id_menu: d.id_menu || '',
+                      bahan_nama: bahan ? bahan.nama_bahan_baku : 'Unknown',
+                      bahan_satuan: bahan ? bahan.satuan : '',
+                      bb_k: 0, bk_k: 0, jml_k: 0,
+                      bb_b: 0, bk_b: 0, jml_b: 0,
+                      buffer_percent: parseFloat(d.buffer_percent || 3),
+                      is_bulk: isBulk,
+                      total_bulk: 0,
+                      id_bahan_baku: d.id_bahan_baku // For helpers
+                   }
+              }
+              
+              const g = grouped[key]
+              if (isBulk) {
+                 let val = parseFloat(d.berat_kotor)
+                 if (this.isMacroUnit(d.id_bahan_baku)) val = val / 1000
+                 g.total_bulk = val
+              } else if (d.id_jenis_porsi == idKecil) {
+                  g.bb_k = parseFloat(d.berat_bersih); g.bk_k = parseFloat(d.berat_kotor); g.jml_k = parseFloat(d.jumlah_porsi)
+              } else if (d.id_jenis_porsi == idBesar) {
+                  g.bb_b = parseFloat(d.berat_bersih); g.bk_b = parseFloat(d.berat_kotor); g.jml_b = parseFloat(d.jumlah_porsi)
+              }
+          })
+
+          const rows = Object.values(grouped).map(item => {
+             // Calculate Totals using existing methods if possible, or replicate logic
+             let total = 0
+             if (item.is_bulk) {
+                total = item.total_bulk
+             } else {
+                const butuhK = this.calcNeed(item.bk_k, item.jml_k, item.id_bahan_baku)
+                const butuhB = this.calcNeed(item.bk_b, item.jml_b, item.id_bahan_baku)
+                total = parseFloat(butuhK) + parseFloat(butuhB)
+             }
+             
+             const bufferAmount = (total * item.buffer_percent / 100)
+             const grandTotal = total + bufferAmount
+
+             return {
+                'Bahan Pangan': item.bahan_nama,
+                'Satuan': this.getUnit(item.id_bahan_baku),
+                'Tipe': item.is_bulk ? 'Bulk' : 'Porsi',
+                'Kecil - Net (g)': item.is_bulk ? '-' : item.bb_k,
+                'Kecil - Gross (g)': item.is_bulk ? '-' : item.bk_k,
+                'Kecil - Jml': item.is_bulk ? '-' : item.jml_k,
+                'Kecil - Total': item.is_bulk ? '-' : parseFloat(this.calcNeed(item.bk_k, item.jml_k, item.id_bahan_baku)),
+                'Besar - Net (g)': item.is_bulk ? '-' : item.bb_b,
+                'Besar - Gross (g)': item.is_bulk ? '-' : item.bk_b,
+                'Besar - Jml': item.is_bulk ? '-' : item.jml_b,
+                'Besar - Total': item.is_bulk ? '-' : parseFloat(this.calcNeed(item.bk_b, item.jml_b, item.id_bahan_baku)),
+                'Total Kebutuhan': parseFloat(total.toFixed(2)),
+                'Buffer (%)': item.buffer_percent,
+                'Total + Buffer': parseFloat(grandTotal.toFixed(2))
+             }
+          })
+
+          // Create Worksheet
+          const ws = XLSX.utils.json_to_sheet(rows)
+          const wb = XLSX.utils.book_new()
+          XLSX.utils.book_append_sheet(wb, ws, "Rencana Belanja")
+          
+          // Generate Filename
+          const dateStr = plan.tanggal_rencana || new Date().toISOString().split('T')[0]
+          XLSX.writeFile(wb, `Rencana_Belanja_${dateStr}.xlsx`)
+          
+          this.toast.success('File berhasil diunduh')
+
+       } catch (err) {
+          console.error(err)
+          this.toast.error('Gagal mengexport file')
+       } finally {
+          this.loading = false
+       }
+    },
     async selectPlan(id) {
        if (this.editPlanId === id) return;
        this.editPlanId = id;
@@ -620,6 +780,7 @@ export default {
     resetForm() {
        this.editPlanId = '';
        this.selectedImportMenuIds = [];
+       this.showPlanTable = false;
        this.loadPlanForEdit(); 
     },
     async importFromMenu() {
@@ -669,7 +830,7 @@ export default {
                          bk_b: null,
                          jml_b: (portions.besar + portions.sedang),
                          
-                         buffer_percent: 5,
+                         buffer_percent: 3,
                          bdd: bddVal
                      };
                      
@@ -693,6 +854,7 @@ export default {
                 this.menuBeneficiaryMap = newMap;
                 
                 this.recalcAllPortions();
+                this.showPlanTable = true;
             } else {
                this.toast.warning("Tidak ada bahan baku yang ditemukan dalam menu yang dipilih.");
             }
@@ -715,7 +877,7 @@ export default {
           this.items = [{ 
                type: 'manual', id_menu: '', id_bahan_baku: '', 
                bb_k: 0, bk_k: 0, bb_b: 0, bk_b: 0, 
-               jml_k: 0, jml_b: 0, buffer_percent: 5, bdd: 100 
+               jml_k: 0, jml_b: 0, buffer_percent: 3, bdd: 100 
           }]
           this.addRow()
           return
@@ -753,9 +915,19 @@ export default {
              }
              const idKecil = getIdPorsi('kecil')
              const idBesar = getIdPorsi('besar')
+             
+             console.log('DEBUG EDIT:', { 
+                 jenisPorsiList: this.jenisPorsiList, 
+                 idKecil, 
+                 idBesar, 
+                 detailsFirst: details[0] 
+             })
 
              details.forEach(d => {
-                 const key = `${d.id_menu || ''}_${d.id_bahan_baku}`
+                 // Use loose equality for safer null checks
+                 const isBulk = (d.id_jenis_porsi == null) 
+                 const key = `${d.id_menu || ''}_${d.id_bahan_baku}_${isBulk ? 'bulk' : 'portion'}`
+                 
                  if (!grouped[key]) {
                       grouped[key] = {
                          type: 'manual',
@@ -763,16 +935,30 @@ export default {
                          id_bahan_baku: d.id_bahan_baku,
                          bb_k: 0, bk_k: 0, jml_k: 0,
                          bb_b: 0, bk_b: 0, jml_b: 0,
-                         buffer_percent: parseFloat(d.buffer_percent || 5),
-                         bdd: 100
+                         buffer_percent: parseFloat(d.buffer_percent || 3),
+                         bdd: 100,
+                         is_bulk: isBulk, // Set initial state from key
+                         total_bulk: 0
                       }
                  }
                  
                  const g = grouped[key]
-                 if (d.id_jenis_porsi == idKecil) {
+                 
+                 if (isBulk) {
+                    g.is_bulk = true
+                    let val = parseFloat(d.berat_kotor)
+                    // If macro unit, convert back to display (1000g -> 1kg)
+                    if (this.isMacroUnit(d.id_bahan_baku)) {
+                        val = val / 1000
+                    }
+                    g.total_bulk = val
+                 } else if (d.id_jenis_porsi == idKecil) {
+                     console.log('MATCH KECIL:', d)
                      g.bb_k = parseFloat(d.berat_bersih); g.bk_k = parseFloat(d.berat_kotor); g.jml_k = parseFloat(d.jumlah_porsi)
                  } else if (d.id_jenis_porsi == idBesar) {
                      g.bb_b = parseFloat(d.berat_bersih); g.bk_b = parseFloat(d.berat_kotor); g.jml_b = parseFloat(d.jumlah_porsi)
+                 } else {
+                     console.warn('Unmatched porsi ID:', d.id_jenis_porsi)
                  }
              })
              this.items = Object.values(grouped)
@@ -780,6 +966,8 @@ export default {
               // Imported menu display is now handled by importedMenusString computed prop
 
               if (this.items.length === 0) this.addRow()
+              
+              this.showPlanTable = true
           }
        } catch (err) {
           console.error(err)
@@ -798,6 +986,14 @@ export default {
        item.bb_k = 0; item.bk_k = 0;
        item.bb_b = 0; item.bk_b = 0;
        item.bdd = 100
+       item.is_bulk = false
+       item.total_bulk = 0
+    },
+    isMacroUnit(id) {
+       const bahan = this.bahanBakuList.find(b => b.id_bahan_baku === id)
+       if (!bahan) return false
+       const u = (bahan.satuan || '').toLowerCase()
+       return ['kg', 'kilogram', 'l', 'liter'].includes(u)
     },
     isWeightBased(id) {
        const bahan = this.bahanBakuList.find(b => b.id_bahan_baku === id)
@@ -805,6 +1001,10 @@ export default {
        const u = (bahan.satuan || '').toLowerCase()
        // List units that act as weights/volumes (div by 1000 for display)
        return ['gram', 'gr', 'g', 'kg', 'kilogram', 'ml', 'l', 'liter', 'cc', 'mg'].includes(u)
+    },
+    getUnit(id) {
+         const bahan = this.bahanBakuList.find(b => b.id_bahan_baku === id)
+         return bahan ? bahan.satuan : ''
     },
     calcNeed(net, jml, id) {
        if (!net || !jml) return 0
@@ -871,20 +1071,25 @@ export default {
        }
     },
     calculateRowTotal(item) {
+       if (item.is_bulk) {
+           return parseFloat(parseFloat(item.total_bulk || 0).toFixed(2))
+       }
+       
        const wBased = this.isWeightBased(item.id_bahan_baku)
+       // Use NET weight for total calculation (Gross is informational only)
        const totK = (item.bb_k || 0) * (item.jml_k || 0)
        const totB = (item.bb_b || 0) * (item.jml_b || 0)
        const total = totK + totB
        
-       if (wBased) return (total / 1000).toFixed(2)
-       return total.toFixed(2)
+       if (wBased) return parseFloat((total / 1000).toFixed(2))
+       return parseFloat(total.toFixed(2))
     },
     calculateRowGrandTotal(item) {
        const rawTotal = parseFloat(this.calculateRowTotal(item))
        // Note: calculateRowTotal already handles /1000 logic appropriately
        const buffer = (item.buffer_percent || 0) / 100
        const grand = rawTotal * (1 + buffer)
-       return grand.toFixed(2)
+       return parseFloat(grand.toFixed(2))
     },
     getMenuName(id) {
        const m = this.menuList.find(x => x.id_menu === id);
@@ -905,8 +1110,10 @@ export default {
         bk_b: 0,
         jml_k: 0,
         jml_b: 0,
-        buffer_percent: 5,
-        bdd: 100
+        buffer_percent: 3,
+        bdd: 100,
+        is_bulk: false,
+        total_bulk: 0
       })
     },
 
@@ -978,8 +1185,25 @@ export default {
 
     removeRow(index) {
       this.items.splice(index, 1)
+      if (this.items.length === 0) this.addRow()
     },
-    async calculateAndSave() {
+     removeMenu(menuId) {
+        if (!confirm('Apakah Anda yakin ingin menghapus menu ini dari rencana? Semua bahan baku terkait akan dihapus.')) return;
+        
+        // Filter out items related to this menu
+        this.items = this.items.filter(item => item.id_menu !== menuId);
+        
+        // Update selection of imported menus if it exists (for import tracking)
+        this.selectedImportMenuIds = this.selectedImportMenuIds.filter(id => id !== menuId);
+        
+        // Recalculate portions and update uniqueImportedMenus (computed automatically)
+        this.recalcAllPortions();
+        
+        this.toast.success('Menu berhasil dihapus dari rencana');
+        
+        if (this.items.length === 0) this.addRow();
+     },
+     async calculateAndSave() {
       this.loading = true
       // Transform UI items to Backend items (Split K and B)
       const splitItems = []
@@ -996,7 +1220,27 @@ export default {
       this.items.forEach(item => {
           if (!item.id_bahan_baku) return
           
-          if (item.jml_k > 0) {
+           if (item.is_bulk) {
+               let val = parseFloat(item.total_bulk || 0)
+               // If macro unit, convert to base (1kg -> 1000g)
+               if (this.isMacroUnit(item.id_bahan_baku)) {
+                   val = val * 1000
+               }
+
+               // Push Single Bulk Item
+               splitItems.push({
+                   type: 'menu', 
+                   id_menu: item.id_menu || null,
+                   id_jenis_porsi: null, // Indicates Bulk/Fixed
+                   jumlah_porsi: 1, 
+                   id_bahan_baku: item.id_bahan_baku,
+                   berat_bersih: val,
+                   berat_kotor: val,
+                   buffer_percent: parseFloat(item.buffer_percent || 0)
+               })
+          } else {
+              // Portion based
+              if (item.jml_k > 0) {
              splitItems.push({
                 type: 'manual',
                 id_menu: item.id_menu,
@@ -1019,6 +1263,7 @@ export default {
                 berat_kotor: item.bk_b,
                 buffer_percent: item.buffer_percent
              })
+          }
           }
       })
       
@@ -1068,6 +1313,7 @@ export default {
     }
   }
 }
+
 </script>
 
 <style scoped>

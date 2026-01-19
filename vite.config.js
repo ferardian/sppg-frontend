@@ -16,4 +16,23 @@ export default defineConfig({
     },
   },
   base: '/',
+  server: {
+    port: 3456,
+    strictPort: true, // Fail if port is already in use
+    host: true, // Expose to network for Cloudflare tunnel
+    allowedHosts: [
+      'idrg-test.my.id',
+      'localhost',
+      '.my.id' // Allow all subdomains of my.id
+    ],
+    proxy: {
+      // Proxy API requests to backend
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+        secure: false,
+        rewrite: (path) => path
+      }
+    }
+  }
 })

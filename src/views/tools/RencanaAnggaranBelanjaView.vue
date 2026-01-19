@@ -9,10 +9,245 @@
       </div>
     </div>
 
-    <!-- Selection Card Replacement: List Table -->
-    <div class="card mb-4" v-if="!selectedPlan">
-      <div class="card-header bg-white">
-        <h5 class="mb-0">Pilih Rencana Belanja</h5>
+    <!-- MODE: LIST of Saved RABs -->
+    <div v-if="mode === 'list'">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-success"><i class="bi bi-journal-check me-2"></i>Daftar Rencana Anggaran Belanja (RAB)</h5>
+                <div>
+                   <button class="btn btn-primary btn-sm me-2" @click="startCreate"><i class="bi bi-plus-circle me-1"></i>Buat RAB Baru</button>
+                   <button class="btn btn-sm btn-outline-secondary" @click="loadRABs"><i class="bi bi-arrow-clockwise"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Tanggal</th>
+                                <th>Judul RAB</th>
+                                <th>Keterangan</th>
+                                <th class="text-end">Total Anggaran</th>
+                                <th class="text-center">Status</th>
+                                <th class="text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="rab in rabList" :key="rab.id_rencana_anggaran">
+                                <td>{{ formatDate(rab.tanggal_mulai) }}</td>
+                                <td class="fw-bold text-dark">{{ rab.judul }}</td>
+                                <td class="text-muted">{{ rab.keterangan || '-' }}</td>
+                                <td class="text-end fw-bold text-success">{{ formatCurrency(rab.total_anggaran) }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ rab.status }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <button class="btn btn-sm btn-info text-white me-1" @click="viewRAB(rab.id_rencana_anggaran)">
+                                        <i class="bi bi-eye"></i> Detail
+                                    </button>
+                                    <button class="btn btn-sm btn-success text-white me-1" @click="viewPagu(rab.id_rencana_anggaran)">
+                                        <i class="bi bi-calculator"></i> Pagu
+                                    </button>
+                                    <button class="btn btn-sm btn-outline-danger" @click="deleteRAB(rab.id_rencana_anggaran)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                             <tr v-if="rabList.length === 0">
+                                <td colspan="6" class="text-center py-5 text-muted">Belum ada data RAB tersimpan.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- RAB Detail Modal Overlay -->
+        <Teleport to="body">
+        <div class="modal-backdrop show" v-if="showRabModal" style="z-index: 2050;"></div>
+        <div class="modal d-block" v-if="showRabModal" tabindex="-1" style="z-index: 2055;">
+          <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header border-bottom-0 pb-0 d-block text-center">
+                <div class="modal-print-header d-none d-print-block">{{ configStore.sppgName }}</div>
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <h5 class="modal-title fw-bold text-primary text-start">
+                        <i class="bi bi-receipt me-2"></i>Detail RAB
+                        <span v-if="selectedRab" class="text-muted fs-6 ms-2">| {{ selectedRab.judul }}</span>
+                    </h5>
+                    <button type="button" class="btn-close" @click="showRabModal = false"></button>
+                </div>
+              </div>
+              <div class="modal-body" v-if="selectedRab">
+                 <div class="row mb-3">
+                     <div class="col-md-6">
+                         <table class="table table-sm table-borderless">
+                             <tr><td width="120">Tanggal</td><td>: {{ formatDate(selectedRab.tanggal_mulai) }}</td></tr>
+                             <tr>
+                                 <td>Status</td>
+                                 <td>: 
+                                    <select class="form-select form-select-sm d-inline-block w-auto text-white fw-bold border-0" 
+                                        :value="selectedRab.status" 
+                                        @change="updateStatus(selectedRab.id_rencana_anggaran, $event.target.value)"
+                                        :class="{
+                                            'bg-secondary': selectedRab.status === 'draft',
+                                            'bg-warning': selectedRab.status === 'diajukan',
+                                            'bg-success': selectedRab.status === 'disetujui',
+                                            'bg-danger': selectedRab.status === 'ditolak'
+                                        }" style="cursor: pointer;">
+                                        <option value="draft" class="bg-white text-dark">DRAFT</option>
+                                        <option value="diajukan" class="bg-white text-dark">DIAJUKAN</option>
+                                        <option value="disetujui" class="bg-white text-dark">DISETUJUI</option>
+                                        <option value="ditolak" class="bg-white text-dark">DITOLAK</option>
+                                    </select>
+                                 </td>
+                             </tr>
+                             <tr><td>Total Anggaran</td><td class="fw-bold text-success fs-5">: {{ formatCurrency(selectedRab.total_anggaran) }}</td></tr>
+                         </table>
+                     </div>
+                     <div class="col-md-6 text-end">
+                         <p class="text-muted">{{ selectedRab.keterangan }}</p>
+                     </div>
+                 </div>
+                 
+                 <div class="table-responsive">
+                     <table class="table table-bordered table-striped table-sm" style="font-size: 0.9em;">
+                         <thead class="table-dark">
+                             <tr>
+                                 <th>Bahan Baku</th>
+
+                                 <th class="text-end">Harga Satuan</th>
+                                 <th class="text-center">Jumlah</th>
+                                 <th class="text-end">Subtotal</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+                             <tr v-for="d in selectedRab.details" :key="d.id_detail_rencana">
+                                 <td>{{ d.nama_bahan_baku }}</td>
+
+                                 <td class="text-end">{{ formatCurrency(d.harga_satuan) }} / {{ d.satuan }}</td>
+                                 <td class="text-center">{{ parseFloat(d.jumlah_total).toLocaleString() }} {{ d.satuan }}</td>
+                                 <td class="text-end fw-bold">{{ formatCurrency(d.subtotal) }}</td>
+                             </tr>
+                         </tbody>
+                         <tfoot class="table-light">
+                             <tr>
+                                 <td colspan="3" class="text-end fw-bold">TOTAL ESTIMASI</td>
+                                 <td class="text-end fw-bold fs-5 text-success">{{ formatCurrency(selectedRab.total_anggaran) }}</td>
+                             </tr>
+                         </tfoot>
+                     </table>
+                 </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @click="showRabModal = false">Tutup</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer me-2"></i>Cetak</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </Teleport>
+    </div>
+
+        <!-- Detail Pagu Modal -->
+        <Teleport to="body">
+        <div class="modal-backdrop show" v-if="showPaguModal" style="z-index: 2050;"></div>
+        <div class="modal d-block" v-if="showPaguModal" tabindex="-1" style="z-index: 2055;">
+          <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+              <div class="modal-header bg-white border-bottom-0 pb-0 d-block text-center">
+                  <div class="modal-print-header d-none d-print-block">{{ configStore.sppgName }}</div>
+                  <div class="d-flex justify-content-between align-items-center w-100">
+                      <h5 class="modal-title fw-bold text-success text-start">
+                          <i class="bi bi-calculator me-2"></i> Detail Pagu Anggaran
+                          <span v-if="selectedRab" class="fs-6 ms-2 text-muted">| {{ selectedRab.judul }}</span>
+                      </h5>
+                      <button type="button" class="btn-close" @click="showPaguModal = false"></button>
+                  </div>
+              </div>
+              <div class="modal-body" v-if="selectedRab && selectedRab.pagu_details">
+                 <div class="alert alert-light border shadow-sm mb-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <strong>Tarif Besar:</strong> {{ formatCurrency(selectedRab.rate_besar) }} <br>
+                            <strong>Tarif Kecil:</strong> {{ formatCurrency(selectedRab.rate_kecil) }}
+                        </div>
+                        <div class="col-md-6 text-end">
+                             <!-- If total_pagu is 0 (legacy), recalc from nominals -->
+                             <h4 class="mb-0 text-success fw-bold">
+                                Total Pagu: {{ formatCurrency(selectedRab.pagu_details.reduce((sum, item) => sum + (parseFloat(item.total_pagu) || (parseFloat(item.nominal_besar) + parseFloat(item.nominal_kecil))), 0)) }}
+                             </h4>
+                             <div class="small text-muted mt-1">
+                                Total Belanja: {{ formatCurrency(selectedRab.total_anggaran) }}
+                             </div>
+                             <div class="fw-bold fs-5 mt-1" :class="(selectedRab.pagu_details.reduce((sum, item) => sum + (parseFloat(item.total_pagu) || (parseFloat(item.nominal_besar) + parseFloat(item.nominal_kecil))), 0) - selectedRab.total_anggaran) >= 0 ? 'text-primary' : 'text-danger'">
+                                Selisih: {{ formatCurrency(selectedRab.pagu_details.reduce((sum, item) => sum + (parseFloat(item.total_pagu) || (parseFloat(item.nominal_besar) + parseFloat(item.nominal_kecil))), 0) - selectedRab.total_anggaran) }}
+                             </div>
+                        </div>
+                    </div>
+                 </div>
+
+                 <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle mb-0 text-center" style="font-size: 0.9em;">
+                       <thead class="table-dark">
+                          <tr>
+                             <th rowspan="2" class="align-middle">No</th>
+                             <th rowspan="2" class="align-middle text-start">Nama Lembaga / Sekolah</th>
+                             <th colspan="2">Porsi Besar</th>
+                             <th colspan="2">Porsi Kecil</th>
+                             <th colspan="2">Total Disetujui</th>
+                             <th colspan="2">Total (Rp)</th>
+                          </tr>
+                          <tr>
+                             <th>Basah</th>
+                             <th>Kering</th>
+                             <th>Basah</th>
+                             <th>Kering</th>
+                             <th>Besar</th>
+                             <th>Kecil</th>
+                             <th>Besar</th>
+                             <th>Kecil</th>
+                          </tr>
+                       </thead>
+                       <tbody>
+                          <tr v-for="(pm, idx) in selectedRab.pagu_details" :key="pm.id_detail_pagu">
+                             <td>{{ idx + 1 }}</td>
+                             <td class="text-start">{{ pm.nama_lembaga }}</td>
+                             <td>{{ pm.basah_besar }}</td>
+                             <td>{{ pm.kering_besar }}</td>
+                             <td>{{ pm.basah_kecil }}</td>
+                             <td>{{ pm.kering_kecil }}</td>
+                             <td class="fw-bold">{{ pm.total_besar }}</td>
+                             <td class="fw-bold">{{ pm.total_kecil }}</td>
+                             <td class="text-end fw-bold">{{ formatCurrency(pm.nominal_besar) }}</td>
+                             <td class="text-end fw-bold">{{ formatCurrency(pm.nominal_kecil) }}</td>
+                          </tr>
+                       </tbody>
+                    </table>
+                 </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" @click="showPaguModal = false">Tutup</button>
+                <button type="button" class="btn btn-primary" onclick="window.print()"><i class="bi bi-printer me-2"></i>Cetak</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        </Teleport>
+
+
+    <!-- MODE: CREATE (Simulasi & Seleksi) -->
+    <div v-if="mode === 'create'">
+       <div class="mb-3">
+           <button class="btn btn-outline-secondary" @click="cancelCreate">
+              <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar RAB
+           </button>
+       </div>
+
+    <!-- Selection Card: List Table -->
+    <div class="card mb-4 border-primary" v-if="!selectedPlan && !loading">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">Langkah 1: Pilih Rencana Belanja</h5>
       </div>
       <div class="card-body p-0">
          <div class="table-responsive">
@@ -41,7 +276,7 @@
                      <td>{{ plan.keterangan || '-' }}</td>
                      <td class="text-center">
                         <button class="btn btn-primary btn-sm" @click="selectAndLoadPlan(plan.id_shopping_plan)">
-                           <i class="bi bi-eye me-1"></i> Tampilkan RAB
+                           <i class="bi bi-arrow-right me-1"></i> Pilih
                         </button>
                      </td>
                   </tr>
@@ -54,19 +289,26 @@
       </div>
     </div>
 
-    <!-- Back Button when Plan is Selected -->
-    <div class="mb-3" v-if="selectedPlan">
-       <button class="btn btn-outline-secondary" @click="clearSelection">
-          <i class="bi bi-arrow-left me-1"></i> Kembali ke Daftar Rencana
-       </button>
-    </div>
-
+    <!-- Loading State -->
     <div v-if="loading" class="text-center py-5">
        <div class="spinner-border text-primary" role="status"></div>
        <p class="mt-2 text-muted">Memuat data...</p>
     </div>
 
+    <!-- Step 2: Analysis View -->
     <div v-else-if="selectedPlan">
+       
+       <!-- Plan Info Header -->
+       <div class="alert alert-light border shadow-sm mb-4 d-flex align-items-center">
+            <div class="bg-primary bg-opacity-10 p-3 rounded-3 me-3 text-primary">
+                <i class="bi bi-calendar2-week-fill fs-3"></i>
+            </div>
+            <div>
+                <h5 class="mb-1 fw-bold text-dark">{{ formatDate(selectedPlan.tanggal_rencana) }}</h5>
+                <div class="text-muted"><i class="bi bi-info-circle me-1"></i>{{ selectedPlan.keterangan || 'Tidak ada keterangan khusus untuk rencana ini.' }}</div>
+            </div>
+       </div>
+
        <!-- 1. Rincian Belanja Table -->
        <div class="card mb-4">
          <div class="card-header bg-white">
@@ -111,33 +353,41 @@
        </div>
 
        <!-- 2. Perhitungan Pagu -->
-       <div class="card mb-4">
-         <div class="card-header bg-white d-flex flex-column flex-lg-row justify-content-between align-items-start align-items-lg-center">
-            <h5 class="mb-0">Perhitungan Pagu Anggaran</h5>
-            <div class="d-flex flex-column flex-md-row gap-2 mt-2 mt-lg-0 w-100 w-lg-auto align-items-end">
-               <!-- Actions -->
-               <div class="btn-group btn-group-sm w-100 w-md-auto">
-                   <button class="btn btn-outline-secondary" @click="copyToClipboard" title="Salin ke Clipboard">
-                       <i class="bi bi-clipboard"></i> Salin
-                   </button>
-                   <button class="btn btn-outline-success" @click="exportExcel" title="Export Excel">
-                       <i class="bi bi-file-earmark-excel"></i> Excel
-                   </button>
-                   <button class="btn btn-outline-danger" @click="exportPdf" title="Export PDF">
-                       <i class="bi bi-file-earmark-pdf"></i> PDF
-                   </button>
-               </div>
-               
-               <div class="input-group input-group-sm w-100 w-md-auto" style="min-width: 150px;">
-                  <span class="input-group-text">Rate Besar</span>
-                  <input type="number" class="form-control text-end" v-model="rateBesar" placeholder="10000">
-               </div>
-               <div class="input-group input-group-sm w-100 w-md-auto" style="min-width: 150px;">
-                  <span class="input-group-text">Rate Kecil</span>
-                  <input type="number" class="form-control text-end" v-model="rateKecil" placeholder="8000">
-               </div>
-            </div>
-         </div>
+       <div class="card mb-4 shadow-sm border-success">
+          <div class="card-header bg-white py-3">
+             <div class="d-flex flex-column flex-xl-row justify-content-between align-items-xl-center gap-3">
+                <!-- Title & Rates -->
+                <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center gap-3">
+                   <h5 class="mb-0 text-success fw-bold text-nowrap"><i class="bi bi-calculator me-2"></i>Simulasi Pagu</h5>
+                   <div class="d-flex gap-2 flex-wrap">
+                      <div class="input-group input-group-sm">
+                          <span class="input-group-text bg-light border-end-0"><i class="bi bi-currency-dollar"></i> Besar</span>
+                          <input type="number" class="form-control text-end" v-model="rateBesar" style="max-width: 100px;" placeholder="10000">
+                      </div>
+                      <div class="input-group input-group-sm">
+                          <span class="input-group-text bg-light border-end-0"><i class="bi bi-currency-dollar"></i> Kecil</span>
+                          <input type="number" class="form-control text-end" v-model="rateKecil" style="max-width: 100px;" placeholder="8000">
+                      </div>
+                   </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <span class="text-muted small me-1 d-none d-md-inline">Ekspor:</span>
+                    <div class="btn-group btn-group-sm">
+                        <button class="btn btn-outline-secondary" @click="copyToClipboard" title="Salin"><i class="bi bi-clipboard"></i></button>
+                        <button class="btn btn-outline-success" @click="exportExcel" title="Excel"><i class="bi bi-file-earmark-excel"></i></button>
+                        <button class="btn btn-outline-danger" @click="exportPdf" title="PDF"><i class="bi bi-file-earmark-pdf"></i></button>
+                    </div>
+                    
+                    <div class="vr mx-2 d-none d-md-block"></div>
+                    
+                    <button class="btn btn-success btn-sm px-4 fw-bold shadow-sm" @click="confirmSaveRAB">
+                        <i class="bi bi-save-fill me-2"></i>Simpan Permanen
+                    </button>
+                </div>
+             </div>
+          </div>
          <div class="card-body p-0">
             <div class="table-responsive">
                <table class="table table-bordered align-middle mb-0 text-center">
@@ -186,8 +436,8 @@
                          <td class="text-muted small">{{ formatCurrency(rateBesar) }}</td>
                          <td class="text-muted small">{{ formatCurrency(rateKecil) }}</td>
                          <!-- Totals -->
-                         <td class="text-end">{{ formatCurrency(pm.total_besar * rateBesar) }}</td>
-                         <td class="text-end">{{ formatCurrency(pm.total_kecil * rateKecil) }}</td>
+                         <td class="text-end fw-bold">{{ formatCurrency(pm.nominal_besar) }}</td>
+                         <td class="text-end fw-bold">{{ formatCurrency(pm.nominal_kecil) }}</td>
                       </tr>
                      <tr class="table-light fw-bold">
                         <td colspan="2" class="text-end">TOTAL</td>
@@ -228,11 +478,49 @@
        </div>
     </div>
   </div>
+  </div>
+    <!-- Save RAB Modal -->
+    <Teleport to="body">
+    <div class="modal fade" :class="{ 'show d-block': showSaveModal }" tabindex="-1" v-if="showSaveModal" style="background: rgba(0,0,0,0.5); z-index: 2055;">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title"><i class="bi bi-save me-2"></i>Simpan RAB Permanen</h5>
+            <button type="button" class="btn-close btn-close-white" @click="showSaveModal = false"></button>
+          </div>
+          <div class="modal-body p-4">
+             <div class="mb-3">
+                <label class="form-label fw-bold">Judul RAB <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-lg" v-model="saveForm.judul" placeholder="Contoh: RAB Januari 2026 Minggu 1">
+                <div class="form-text">Berikan nama yang jelas untuk identifikasi RAB ini.</div>
+             </div>
+             <div class="mb-3">
+                <label class="form-label fw-bold">Keterangan</label>
+                <textarea class="form-control" rows="3" v-model="saveForm.keterangan" placeholder="Tambahkan catatan jika perlu..."></textarea>
+             </div>
+             <div class="alert alert-info d-flex align-items-center mb-0">
+                <i class="bi bi-info-circle-fill me-2 fs-4"></i>
+                <small>Bahan baku dan harga saat ini akan disimpan sebagai snapshot permanen.</small>
+             </div>
+          </div>
+          <div class="modal-footer bg-light">
+             <button type="button" class="btn btn-outline-secondary" @click="showSaveModal = false">Batal</button>
+             <button type="button" class="btn btn-success px-4" @click="submitSaveRAB" :disabled="loading">
+                <span v-if="loading" class="spinner-border spinner-border-sm me-1"></span>
+                Simpan RAB
+             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </Teleport>
 </template>
 
 <script>
 import api from '@/services/api'
+import Swal from 'sweetalert2'
 import { useToast } from 'vue-toastification'
+import { useConfigStore } from '@/stores/config'
 import * as XLSX from 'xlsx'
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
@@ -245,11 +533,22 @@ export default {
   name: 'RencanaAnggaranBelanjaView',
   setup() {
     const toast = useToast()
-    return { toast }
+    const configStore = useConfigStore()
+    return { toast, configStore }
   },
+  
   data() {
     return {
       loading: false,
+      mode: 'list', // 'list' | 'create'
+      
+      // RAB List Data
+      rabList: [],
+      showRabModal: false,
+      showPaguModal: false,
+      selectedRab: null,
+      
+      // Creation Data
       planList: [],
       selectedPlanId: null,
       selectedPlan: null,
@@ -262,8 +561,19 @@ export default {
       
       // Configuration
       rateBesar: 10000,
-      rateKecil: 8000
+      rateKecil: 8000,
+      
+      // Save Modal Data
+      showSaveModal: false,
+      saveForm: {
+          judul: '',
+          keterangan: ''
+      }
     }
+  },
+  async created() {
+      // Allow passing planId via query prop or similar if needed in future, but for now just load RAB list
+      await this.loadRABs()
   },
   computed: {
     totalShoppingCost() {
@@ -310,6 +620,11 @@ export default {
               total_besar: (inBasah ? pBesar : 0) + (inKering ? pBesar : 0),
               total_kecil: (inBasah ? pKecil : 0) + (inKering ? pKecil : 0),
               
+              nominal_besar: ((inBasah ? pBesar : 0) + (inKering ? pBesar : 0)) * this.rateBesar,
+              nominal_kecil: ((inBasah ? pKecil : 0) + (inKering ? pKecil : 0)) * this.rateKecil,
+              
+              total_pagu: (((inBasah ? pBesar : 0) + (inKering ? pBesar : 0)) * this.rateBesar) + (((inBasah ? pKecil : 0) + (inKering ? pKecil : 0)) * this.rateKecil),
+
               porsi_besar: pBesar, // raw
               porsi_kecil: pKecil // raw
           }
@@ -341,6 +656,152 @@ export default {
     }
   },
   methods: {
+    // RAB Manager Methods
+    async loadRABs() {
+       this.loading = true
+       try {
+          const res = await api.get('/calculator/rab')
+          if(res.data.success) {
+             this.rabList = res.data.data
+          }
+       } catch (err) { console.error(err) }
+       finally { this.loading = false }
+    },
+    startCreate() {
+        this.mode = 'create'
+        this.selectedPlan = null
+        this.loadPlans() // Load plans only when needed
+    },
+    cancelCreate() {
+        this.mode = 'list'
+        this.selectedPlan = null
+        this.loadRABs()
+    },
+    async viewRAB(id) {
+       this.loading = true
+       try {
+           const res = await api.get(`/calculator/rab/${id}`)
+           if (res.data.success) {
+               this.selectedRab = res.data.data
+               this.showRabModal = true
+           }
+       } catch (err) {
+           this.toast.error('Gagal memuat detail RAB')
+       } finally {
+           this.loading = false
+       }
+    },
+
+
+    async updateStatus(id, newStatus) {
+        // Use SweetAlert2 for beautiful confirmation
+        const result = await Swal.fire({
+            title: 'Konfirmasi Perubahan',
+            text: `Ubah status RAB menjadi ${newStatus.toUpperCase()}?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonColor: '#0d6efd',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Ya, Ubah!',
+            cancelButtonText: 'Batal'
+        })
+
+        if (!result.isConfirmed) {
+            // Revert selection if cancelled
+            const original = this.selectedRab.status;
+            this.selectedRab.status = '...'; 
+            this.$nextTick(() => this.selectedRab.status = original); 
+            return;
+        }
+        
+        try {
+            const response = await api.patch(`/calculator/rab/${id}/status`, { status: newStatus });
+            if (response.data.success) {
+                // this.toast.success('Status berhasil diperbarui'); // Use Swal success instead or keep toast
+                Swal.fire('Berhasil!', 'Status telah diperbarui.', 'success')
+                
+                // Update local state
+                if (this.selectedRab && this.selectedRab.id_rencana_anggaran === id) {
+                    this.selectedRab.status = newStatus;
+                }
+                await this.loadRABs(); // Refresh list
+            }
+        } catch (error) {
+            this.toast.error('Gagal memperbarui status');
+            console.error(error);
+        }
+    },
+
+    async deleteRAB(id) {
+        if(!confirm('Hapus Data RAB ini secara permanen?')) return
+        try {
+            await api.delete(`/calculator/rab/${id}`)
+            this.toast.success('RAB dihapus')
+            this.loadRABs()
+        } catch(e) { this.toast.error('Gagal hapus RAB') }
+    },
+    async viewPagu(id) {
+       this.loading = true
+       try {
+           const res = await api.get(`/calculator/rab/${id}`)
+           if (res.data.success) {
+               this.selectedRab = res.data.data
+               this.showPaguModal = true
+           }
+       } catch (err) {
+           this.toast.error('Gagal memuat detail Pagu')
+       } finally {
+           this.loading = false
+       }
+    },
+    // Creation / Analysis Methods
+    confirmSaveRAB() {
+        if (!this.selectedPlan) return
+        
+        // Init form with defaults
+        // Format: RAB - [Date]
+        const dateStr = this.formatDate(this.selectedPlan.tanggal_rencana)
+        this.saveForm.judul = `RAB - ${dateStr}`
+        this.saveForm.keterangan = this.selectedPlan.keterangan || ''
+        
+        // Open Modal
+        this.showSaveModal = true
+    },
+    
+    async submitSaveRAB() {
+        if (!this.saveForm.judul) {
+            this.toast.warning('Judul RAB wajib diisi')
+            return
+        }
+        
+        this.loading = true
+        try {
+          const res = await api.post('/calculator/rab', {
+              id_shopping_plan: this.selectedPlan.id_shopping_plan,
+              judul: this.saveForm.judul,
+              keterangan: this.saveForm.keterangan,
+              tanggal: this.selectedPlan.tanggal_rencana,
+              snapshot_items: this.shoppingItems, // Send the exact items viewed in frontend
+              snapshot_pagu: this.beneficiarySummary,
+              rate_besar: this.rateBesar,
+              rate_kecil: this.rateKecil
+          })
+          
+          if (res.data.success) {
+              this.toast.success('RAB berhasil disimpan!')
+              this.showSaveModal = false // Close Modal
+              this.mode = 'list' // Back to list
+              this.loadRABs() // Reload list
+          }
+        } catch (err) {
+            console.error(err)
+            this.toast.error('Gagal membuat RAB: ' + (err.response?.data?.message || err.message))
+        } finally {
+            this.loading = false
+        }
+    },
+    
+    // Existing Helper Methods
     formatDate(date) {
       if (!date) return '-'
       return new Date(date).toLocaleDateString('id-ID', {
@@ -376,10 +837,13 @@ export default {
        this.shoppingItems = []
        this.beneficiaries = []
     },
-    formatNumber(num) {
-        return parseFloat(num).toLocaleString('id-ID')
+     clearSelection() {
+        this.selectedPlanId = null
+        this.selectedPlan = null
+        this.shoppingItems = []
+        this.beneficiaries = []
      },
-     
+      
      formatDate(date) {
         if (!date) return '-'
         return new Date(date).toLocaleDateString('id-ID', {
@@ -565,78 +1029,7 @@ export default {
         XLSX.writeFile(wb, `Laporan_${dateStr}.xlsx`)
      },
      
-     exportPdf() {
-        if (!this.beneficiarySummary.length) return
-        
-        const doc = new jsPDF()
-        
-        // Header
-        doc.setFontSize(16)
-        doc.text("Rencana Anggaran Belanja", 14, 15)
-        
-        doc.setFontSize(10)
-        const dateStr = this.selectedPlan ? this.formatDate(this.selectedPlan.tanggal_rencana) : '-'
-        doc.text(`Tanggal Rencana: ${dateStr}`, 14, 22)
-        doc.text(`Total Pagu: Rp ${this.formatCurrency(this.totalPagu.total)}`, 14, 27)
-        
-        // Prepare table data
-        const body = this.beneficiarySummary.map((pm, idx) => [
-           idx + 1,
-           pm.nama_lembaga,
-           pm.basah_besar, pm.kering_besar, // Besar Breakdown
-           pm.basah_kecil, pm.kering_kecil, // Kecil Breakdown
-           pm.total_besar, pm.total_kecil,  // Totals
-           `Rp ${this.formatCurrency((pm.total_besar * this.rateBesar) + (pm.total_kecil * this.rateKecil))}`
-        ])
-        
-        // Total row
-        const tp = this.totalPortions
-        body.push([
-           '', 'TOTAL',
-           tp.basah_besar, tp.kering_besar,
-           tp.basah_kecil, tp.kering_kecil,
-           tp.total_besar, tp.total_kecil,
-           `Rp ${this.formatCurrency(this.totalPagu.total)}`
-        ])
-        
-        doc.autoTable({
-           startY: 32,
-           head: [[
-              { content: 'No', rowSpan: 2, styles: { valign: 'middle' } },
-              { content: 'Nama Lembaga', rowSpan: 2, styles: { valign: 'middle' } },
-              { content: 'Porsi Besar', colSpan: 2, styles: { halign: 'center', fillColor: [209, 236, 241], textColor: [0,0,0] } }, // table-info color approx
-              { content: 'Porsi Kecil', colSpan: 2, styles: { halign: 'center', fillColor: [209, 231, 221], textColor: [0,0,0] } }, // table-success color approx
-              { content: 'Total', colSpan: 2, styles: { halign: 'center' } },
-              { content: 'Pagu (Rp)', rowSpan: 2, styles: { valign: 'middle' } }
-           ], [
-              { content: 'Basah', styles: { fillColor: [209, 236, 241], textColor: [0,0,0] } },
-              { content: 'Kering', styles: { fillColor: [209, 236, 241], textColor: [0,0,0] } },
-              { content: 'Basah', styles: { fillColor: [209, 231, 221], textColor: [0,0,0] } },
-              { content: 'Kering', styles: { fillColor: [209, 231, 221], textColor: [0,0,0] } },
-              'Besar', 'Kecil'
-           ]],
-           body: body,
-           theme: 'grid',
-           styles: { fontSize: 8, cellPadding: 2 },
-           headStyles: { fillColor: [240, 240, 240], textColor: [0,0,0], lineColor: [200, 200, 200], lineWidth: 0.1 },
-           columnStyles: {
-              0: { halign: 'center' },
-              2: { halign: 'center' }, 3: { halign: 'center' },
-              4: { halign: 'center' }, 5: { halign: 'center' },
-              6: { halign: 'center', fontStyle: 'bold' }, 7: { halign: 'center', fontStyle: 'bold' },
-              8: { halign: 'right' }
-           },
-           didParseCell: function (data) {
-               // Style the Last Row (Total)
-               if (data.row.index === body.length - 1) {
-                   data.cell.styles.fontStyle = 'bold';
-                   data.cell.styles.fillColor = [240, 240, 240]; 
-               }
-           }
-        })
-        
-        doc.save(`RAB_${dateStr}.pdf`)
-     },
+
 
      exportPdf() {
         if (!this.beneficiarySummary.length) return
@@ -823,8 +1216,180 @@ export default {
        }
     }
   },
-  mounted() {
-     this.loadPlans()
-  }
+
 }
 </script>
+
+<style>
+/* Print Styles - Global to affect Teleported Modals */
+@media print {
+    /* Hide everything initially */
+    @page { 
+        margin: 1cm; /* Reasonable margin, often supresses default headers if strict enough, but browsers vary */
+        size: auto;
+    }
+
+    body > * {
+        visibility: hidden !important;
+    }
+    
+    /* Re-display the active modal */
+    body > .modal.d-block {
+        visibility: visible !important;
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        z-index: 9999 !important;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+        display: none !important;
+    }
+
+    /* Reset Modal Positioning for Print */
+    .modal.d-block .modal-dialog {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+    }
+
+    .modal.d-block .modal-content {
+        border: none !important;
+        box-shadow: none !important;
+    }
+
+    .modal.d-block .modal-header,
+    .modal.d-block .modal-footer {
+        border: none !important;
+    }
+
+    /* Hide Controls & Buttons */
+    .modal.d-block .btn-close,
+    .modal.d-block .modal-footer, 
+    .modal.d-block .btn {
+        display: none !important;
+    }
+
+    /* Enhance Header */
+    .modal.d-block .modal-header {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: center !important;
+        margin-bottom: 30px !important;
+        border-bottom: 2px solid #000 !important;
+        padding-bottom: 15px !important;
+    }
+
+    .modal.d-block .modal-title {
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        font-size: 20pt !important;
+        font-weight: 800 !important;
+        color: #000 !important;
+        margin-bottom: 5px !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* Company Header Stub */
+    .modal-print-header {
+        display: none !important;
+    }
+
+    .modal.d-block .modal-print-header {
+        display: block !important;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        font-size: 11pt !important;
+        font-weight: 600 !important;
+        color: #444 !important;
+        margin-bottom: 5px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    /* Table Improvements - Modern Look */
+    .modal.d-block .table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+        font-size: 9.5pt !important;
+        color: #000 !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .modal.d-block .table th {
+        background-color: #f8f9fa !important; /* Lighter grey */
+        color: #000 !important;
+        font-weight: 700 !important;
+        text-transform: uppercase !important;
+        font-size: 8.5pt !important;
+        letter-spacing: 0.5px !important;
+        border-bottom: 2px solid #000 !important;
+        border-top: 1px solid #000 !important;
+        vertical-align: middle !important;
+    }
+
+    .modal.d-block .table td {
+        border-bottom: 1px solid #ddd !important;
+        padding: 8px 10px !important;
+        vertical-align: middle !important;
+    }
+    
+    /* Remove vertical borders for cleaner look, or keep them subtle */
+    .modal.d-block .table th, 
+    .modal.d-block .table td {
+        border-left: none !important;
+        border-right: none !important;
+    }
+
+    /* Row striping for readability */
+    .modal.d-block .table tbody tr:nth-of-type(odd) {
+        background-color: rgba(0,0,0,0.02) !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    
+    /* Summary / Totals Styling */
+    .modal.d-block .alert {
+        border: 1px solid #000 !important;
+        background-color: #fff !important;
+        border-radius: 4px !important;
+        padding: 15px !important;
+    }
+    
+    .modal.d-block h4 {
+        font-size: 14pt !important;
+        font-weight: bold !important;
+        margin: 0 !important;
+    }
+
+    /* Layout Adjustments */
+    .modal.d-block .row {
+        display: flex !important;
+        flex-wrap: nowrap !important;
+        margin-bottom: 20px !important;
+        gap: 20px !important;
+    }
+    
+    .modal.d-block .col-md-6 {
+        width: 50% !important;
+        flex: 1 !important;
+    }
+    
+    /* Info Table (Top of RAB Modal) cleaning */
+    .modal.d-block .table-borderless td {
+        border: none !important;
+        padding: 4px 0 !important;
+    }
+}
+
+/* GLOBAL OVERRIDE FOR SWEETALERT on top of High-Z-Index Modals */
+div:where(.swal2-container) {
+  z-index: 2060 !important;
+}
+</style>

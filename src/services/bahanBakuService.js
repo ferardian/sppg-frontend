@@ -2,9 +2,9 @@ import apiClient from './api'
 
 class BahanBakuService {
   // Get all bahan baku data
-  async getAll() {
+  async getAll(params = {}) {
     try {
-      const response = await apiClient.get('/bahan-baku')
+      const response = await apiClient.get('/bahan-baku', { params })
       return response.data
     } catch (error) {
       console.error('Error fetching bahan baku data:', error)
@@ -56,6 +56,18 @@ class BahanBakuService {
       throw error
     }
   }
+
+  // Get next available code
+  async getNextCode() {
+    try {
+      const response = await apiClient.get('/bahan-baku/next-code')
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching next code:', error)
+      throw error
+    }
+  }
+
   // Link nutrition data to bahan baku
   async linkNutrition(id, idKomposisiPangan) {
     try {

@@ -22,6 +22,15 @@
          </div>
       </div>
 
+      <!-- 
+        MENU STRUCTURE: 
+        Menu items didefinisikan di script section (variable menuItems).
+        Untuk menambah/edit/hapus menu, edit array menuItems di bawah.
+        Lihat MENU_STRUCTURE.md untuk dokumentasi lengkap.
+        
+        TODO: Refactor template ini untuk menggunakan v-for dari menuItems
+        agar otomatis sinkron dengan mobile sidebar.
+      -->
       <ul class="nav flex-column">
         <li class="nav-item">
           <router-link to="/dashboard" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Dashboard' : ''">
@@ -49,6 +58,12 @@
           <router-link to="/master-data/pegawai" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Pegawai' : ''">
             <i class="bi bi-people me-2"></i>
              <span v-show="!isEffectivelyCollapsed">Pegawai</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/master-data/jabatan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Jabatan' : ''">
+            <i class="bi bi-briefcase me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Jabatan</span>
           </router-link>
         </li>
         <li class="nav-item">
@@ -108,6 +123,18 @@
           <router-link to="/tools/rab" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Rencana Anggaran' : ''">
             <i class="bi bi-wallet2 me-2"></i>
              <span v-show="!isEffectivelyCollapsed">Rencana Anggaran</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/tools/buku-kas" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Buku Kas' : ''">
+            <i class="bi bi-cash-coin me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Buku Kas</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
+          <router-link to="/tools/laporan-gaji" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Laporan Gaji' : ''">
+            <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Laporan Gaji</span>
           </router-link>
         </li>
 
@@ -179,12 +206,12 @@
 
           <!-- User Menu -->
           <div class="navbar-nav ms-auto">
-            <div class="nav-item dropdown">
+            <div class="nav-item dropdown position-relative">
               <a
                 class="nav-link dropdown-toggle d-flex align-items-center"
                 href="#"
                 role="button"
-                data-bs-toggle="dropdown"
+                @click.prevent="showUserMenu = !showUserMenu"
                 aria-expanded="false"
               >
                 <div class="avatar bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
@@ -192,22 +219,22 @@
                 </div>
                 <span class="d-none d-md-block">{{ authStore.userName }}</span>
               </a>
-              <ul class="dropdown-menu dropdown-menu-end">
+              <ul class="dropdown-menu dropdown-menu-end" :class="{ 'show': showUserMenu }">
                 <li>
-                  <router-link to="/profile" class="dropdown-item">
+                  <router-link to="/profile" class="dropdown-item" @click="showUserMenu = false">
                     <i class="bi bi-person me-2"></i>
                     Profil
                   </router-link>
                 </li>
                 <li>
-                  <router-link to="/settings" class="dropdown-item">
+                  <router-link to="/settings" class="dropdown-item" @click="showUserMenu = false">
                     <i class="bi bi-gear me-2"></i>
                     Pengaturan
                   </router-link>
                 </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                  <a class="dropdown-item" href="#" @click="handleLogout">
+                  <a class="dropdown-item text-danger" href="#" @click.prevent="handleLogout">
                     <i class="bi bi-box-arrow-right me-2"></i>
                     Logout
                   </a>
@@ -269,6 +296,12 @@
             </router-link>
           </li>
           <li class="nav-item">
+            <router-link to="/master-data/jabatan" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-briefcase me-2"></i>
+              Jabatan
+            </router-link>
+          </li>
+          <li class="nav-item">
             <router-link to="/master-data/bahan-baku" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-basket me-2"></i>
               Bahan Baku
@@ -292,16 +325,16 @@
               Manajemen User
             </router-link>
           </li>
-          <li class="nav-item mt-3">
-            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-              Transaksi
-            </h6>
-          </li>
           <li class="nav-item">
             <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-person-check me-2"></i>
               Penerima Manfaat
             </router-link>
+          </li>
+          <li class="nav-item mt-3">
+            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
+              Transaksi
+            </h6>
           </li>
           <li class="nav-item">
             <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" @click="closeMobileMenu">
@@ -322,9 +355,15 @@
             </router-link>
           </li>
           <li class="nav-item">
-            <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-egg-fried me-2"></i>
-              Komposisi Pangan
+            <router-link to="/tools/buku-kas" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-cash-coin me-2"></i>
+              Buku Kas
+            </router-link>
+          </li>
+          <li class="nav-item">
+            <router-link to="/tools/laporan-gaji" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-file-earmark-spreadsheet me-2"></i>
+              Laporan Gaji
             </router-link>
           </li>
           <li class="nav-item">
@@ -339,6 +378,12 @@
             <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
               Manajemen Menu
             </h6>
+          </li>
+          <li class="nav-item">
+            <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-egg-fried me-2"></i>
+              Komposisi Pangan
+            </router-link>
           </li>
           <li class="nav-item">
             <router-link to="/management/recipe-management" class="nav-link" active-class="active" @click="closeMobileMenu">
@@ -368,10 +413,52 @@ export default {
     
     const configStore = useConfigStore()
     
+    // Centralized menu structure
+    const menuItems = [
+      {
+        section: 'main',
+        items: [
+          { to: '/dashboard', icon: 'bi-speedometer2', label: 'Dashboard' }
+        ]
+      },
+      {
+        section: 'Data Master',
+        items: [
+          { to: '/master-data/sppg', icon: 'bi-building', label: 'SPPG' },
+          { to: '/master-data/pegawai', icon: 'bi-people', label: 'Pegawai' },
+          { to: '/master-data/jabatan', icon: 'bi-briefcase', label: 'Jabatan' },
+          { to: '/master-data/bahan-baku', icon: 'bi-basket', label: 'Bahan Baku' },
+          { to: '/master-data/menu', icon: 'bi-menu-app', label: 'Menu' },
+          { to: '/master-data/supplier', icon: 'bi-truck', label: 'Supplier' },
+          { to: '/master-data/user-management', icon: 'bi-people-fill', label: 'Manajemen User' },
+          { to: '/transactions/penerima-manfaat', icon: 'bi-person-check', label: 'Penerima Manfaat' }
+        ]
+      },
+      {
+        section: 'Transaksi',
+        items: [
+          { to: '/transactions/stok-opname', icon: 'bi-clipboard-check', label: 'Stok Opname' },
+          { to: '/tools/shopping-list', icon: 'bi-cart-check', label: 'Rencana Menu' },
+          { to: '/tools/rab', icon: 'bi-wallet2', label: 'Rencana Anggaran' },
+          { to: '/tools/buku-kas', icon: 'bi-cash-coin', label: 'Buku Kas' },
+          { to: '/tools/laporan-gaji', icon: 'bi-file-earmark-spreadsheet', label: 'Laporan Gaji' },
+          { to: '/transactions/distribusi-makanan', icon: 'bi-box-seam', label: 'Distribusi Makanan' }
+        ]
+      },
+      {
+        section: 'Manajemen Menu',
+        items: [
+          { to: '/tools/komposisi-pangan', icon: 'bi-egg-fried', label: 'Komposisi Pangan' },
+          { to: '/management/recipe-management', icon: 'bi-journal-text', label: 'Resep & Kalkulator', badge: 'NEW' }
+        ]
+      }
+    ]
+    
     // Sidebar collapse state
-    // Default to collapsed as requested
-    const isSidebarCollapsed = ref(true)
+    // Default to expanded
+    const isSidebarCollapsed = ref(false)
     const isHovered = ref(false)
+    const showUserMenu = ref(false)
     
     // Sidebar is effectively collapsed only if "locked" collapsed AND not currently hovered
     const isEffectivelyCollapsed = computed(() => isSidebarCollapsed.value && !isHovered.value)
@@ -403,6 +490,7 @@ export default {
         'Dashboard': 'Dashboard',
         'SPPG': `Data ${configStore.sppgName}`,
         'Pegawai': 'Data Pegawai',
+        'Jabatan': 'Master Jabatan',
         'BahanBaku': 'Data Bahan Baku',
         'Menu': 'Data Menu',
         'PenerimaManfaat': 'Penerima Manfaat',
@@ -410,7 +498,9 @@ export default {
         'UserManagement': 'Manajemen User',
         'StokOpname': 'Stok Opname',
         'DistribusiMakanan': 'Distribusi Makanan',
-        'KomposisiPangan': 'Komposisi Pangan'
+        'KomposisiPangan': 'Komposisi Pangan',
+        'BukuKas': 'Buku Kas & Keuangan',
+        'LaporanGaji': 'Laporan Gaji Relawan'
       }
       return titles[routeName] || 'Dashboard'
     }
@@ -457,7 +547,9 @@ export default {
       isSidebarCollapsed,
       isEffectivelyCollapsed,
       toggleSidebar,
-      handleSidebarHover
+      handleSidebarHover,
+      showUserMenu,
+      menuItems
     }
   }
 }

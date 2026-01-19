@@ -56,18 +56,38 @@
     <!-- Tabel Data -->
     <div v-if="hasPenerimaManfaatData && !showAddForm" class="card shadow-sm">
       <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-person-check me-2"></i>
-            Data Penerima Manfaat
-          </h5>
-          <span class="badge bg-white text-primary">
-            {{ penerimaManfaatData.length }} Data
-          </span>
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+          <div class="d-flex align-items-center gap-2">
+            <h5 class="mb-0">
+              <i class="bi bi-person-check me-2"></i>
+              Data Penerima Manfaat
+            </h5>
+            <span class="badge bg-white text-primary bg-opacity-25 border border-white">
+              {{ filteredPenerimaManfaatData.length }} Data
+            </span>
+          </div>
+          
+          <div class="d-flex gap-2">
+            <div class="input-group input-group-sm" style="max-width: 250px;">
+              <span class="input-group-text bg-white border-0 text-primary">
+                <i class="bi bi-search"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control border-0" 
+                placeholder="Cari..." 
+                v-model="searchQuery"
+                style="background-color: rgba(255,255,255,0.9);"
+              >
+            </div>
+            <button class="btn btn-light btn-sm rounded-circle shadow-sm" @click="fetchPenerimaManfaatData" title="Refresh Data">
+              <i class="bi bi-arrow-clockwise text-primary"></i>
+            </button>
+          </div>
         </div>
       </div>
       <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive table-scrollable">
           <table class="table table-hover mb-0">
             <thead class="table-light">
               <tr>
@@ -81,7 +101,7 @@
                   <i class="bi bi-tag me-1"></i>Jenis Penerima
                 </th>
                 <th class="border-0">
-                  <i class="bi bi-pie-chart me-1"></i>Porsi (B/S/K)
+                  <i class="bi bi-pie-chart me-1"></i>Porsi (B/K)
                 </th>
                 <th class="border-0">
                   <i class="bi bi-geo-alt me-1"></i>Lokasi
@@ -95,7 +115,15 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="item in penerimaManfaatData" :key="item.id_penerima">
+              <tr v-if="filteredPenerimaManfaatData.length === 0">
+                <td colspan="7" class="text-center py-5">
+                  <div class="text-muted">
+                    <i class="bi bi-search fs-1 d-block mb-2 opacity-50"></i>
+                    <p class="mb-0">Data tidak ditemukan</p>
+                  </div>
+                </td>
+              </tr>
+              <tr v-for="item in filteredPenerimaManfaatData" :key="item.id_penerima">
                 <td class="align-middle">
                   <span class="badge bg-light text-dark">{{ item.id_penerima }}</span>
                 </td>
@@ -115,9 +143,6 @@
                   <div class="d-flex flex-column gap-1">
                     <span class="badge bg-primary bg-opacity-10 text-primary border border-primary text-start">
                       B: <strong>{{ item.porsi_besar || 0 }}</strong>
-                    </span>
-                    <span class="badge bg-success bg-opacity-10 text-success border border-success text-start">
-                      S: <strong>{{ item.porsi_sedang || 0 }}</strong>
                     </span>
                     <span class="badge bg-info bg-opacity-10 text-info border border-info text-start">
                       K: <strong>{{ item.porsi_kecil || 0 }}</strong>
@@ -171,18 +196,21 @@
     </div>
 
     <!-- Form Tambah/Edit -->
-    <div v-if="showAddForm" class="card border-0 shadow-sm">
-      <div class="card-header bg-gradient-success text-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-plus-circle me-2"></i>
-            {{ editingId ? 'Edit' : 'Tambah' }} Penerima Manfaat
-          </h5>
-          <button class="btn btn-light btn-sm" @click="cancelAdd">
-            <i class="bi bi-x-lg me-1"></i>
-            Batal
-          </button>
-        </div>
+    <div v-if="showAddForm" class="card border-0 shadow-sm" ref="penerimaFormCard">
+      <div class="card-header text-white py-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
+        <h5 class="mb-0">
+          <i class="bi bi-plus-circle me-2"></i>
+          {{ editingId ? 'Edit' : 'Tambah' }} Penerima Manfaat
+        </h5>
+        <button 
+          type="button" 
+          class="btn btn-sm btn-light rounded-circle" 
+          @click="cancelAdd"
+          title="Tutup Form"
+          style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
+        >
+          <i class="bi bi-x-lg text-dark"></i>
+        </button>
       </div>
       <div class="card-body">
         <form @submit.prevent="savePenerimaManfaat">
@@ -310,15 +338,11 @@
           </div>
 
            <div class="row">
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                <label class="form-label">Porsi Besar</label>
                <input v-model="form.porsi_besar" type="number" class="form-control" min="0" placeholder="0">
             </div>
-            <div class="col-md-4 mb-3">
-               <label class="form-label">Porsi Sedang</label>
-               <input v-model="form.porsi_sedang" type="number" class="form-control" min="0" placeholder="0">
-            </div>
-            <div class="col-md-4 mb-3">
+            <div class="col-md-6 mb-3">
                <label class="form-label">Porsi Kecil</label>
                <input v-model="form.porsi_kecil" type="number" class="form-control" min="0" placeholder="0">
             </div>
@@ -390,16 +414,26 @@
         </form>
       </div>
     </div>
+
+    <div v-show="false">
+         <!-- Hidden dummy to keep nextNumber logic compatible if needed, though we removed porsi_sedang -->
+    </div>
+
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import penerimaManfaatService from '@/services/penerimaManfaatService'
+import { useToast } from 'vue-toastification'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'PenerimaManfaatView',
   setup() {
+    // Toast notification
+    const toast = useToast()
+    
     // State management
     const showAddForm = ref(false)
     const penerimaManfaatData = ref([])
@@ -408,6 +442,10 @@ export default {
     const loading = ref(false)
     const error = ref('')
     const editingId = ref(null)
+    const searchQuery = ref('')
+    
+    // Ref for form card (for auto-scroll)
+    const penerimaFormCard = ref(null)
 
     // Form data
     const form = ref({
@@ -424,7 +462,6 @@ export default {
       provinsi: '',
       jumlah_siswa: '',
       porsi_besar: 0,
-      porsi_sedang: 0,
       porsi_kecil: 0,
       status_gizi_umum: '',
       tanggal_daftar: '',
@@ -434,6 +471,23 @@ export default {
     // Computed properties
     const hasPenerimaManfaatData = computed(() => {
       return penerimaManfaatData.value && penerimaManfaatData.value.length > 0
+    })
+
+    const filteredPenerimaManfaatData = computed(() => {
+      if (!searchQuery.value) {
+        return penerimaManfaatData.value
+      }
+      
+      const query = searchQuery.value.toLowerCase()
+      return penerimaManfaatData.value.filter(item => {
+        return (
+          (item.nama_lembaga && item.nama_lembaga.toLowerCase().includes(query)) ||
+          (item.kode_lembaga && item.kode_lembaga.toLowerCase().includes(query)) ||
+          (item.kepala_sekolah && item.kepala_sekolah.toLowerCase().includes(query)) ||
+          (item.kabupaten_kota && item.kabupaten_kota.toLowerCase().includes(query)) ||
+          (item.alamat && item.alamat.toLowerCase().includes(query))
+        )
+      })
     })
 
     // Methods
@@ -479,6 +533,7 @@ export default {
     const savePenerimaManfaat = async () => {
       try {
         loading.value = true
+        const isEditing = !!editingId.value
 
         if (editingId.value) {
           await penerimaManfaatService.update(editingId.value, form.value)
@@ -494,16 +549,21 @@ export default {
         // Generate new preview kode for next entry
         generatePreviewKodeLembaga()
 
-        alert(`Penerima manfaat berhasil ${editingId.value ? 'diupdate' : 'ditambahkan'}!`)
+        // Show success toast
+        if (isEditing) {
+          toast.success('Penerima manfaat berhasil diperbarui!')
+        } else {
+          toast.success('Penerima manfaat berhasil ditambahkan!')
+        }
       } catch (err) {
         console.error('Error saving penerima manfaat:', err)
 
         if (err.response?.status === 422) {
           const errors = err.response.data.errors
           const errorMessages = Object.values(errors).flat()
-          alert('Validasi gagal: ' + errorMessages.join(', '))
+          toast.error('Validasi gagal: ' + errorMessages.join(', '), { timeout: 5000 })
         } else {
-          alert('Gagal menyimpan data penerima manfaat: ' + (err.response?.data?.message || err.message))
+          toast.error('Gagal menyimpan data penerima manfaat: ' + (err.response?.data?.message || err.message), { timeout: 5000 })
         }
       } finally {
         loading.value = false
@@ -527,7 +587,6 @@ export default {
         provinsi: item.provinsi || '',
         jumlah_siswa: item.jumlah_siswa || '',
         porsi_besar: item.porsi_besar || 0,
-        porsi_sedang: item.porsi_sedang || 0,
         porsi_kecil: item.porsi_kecil || 0,
         status_gizi_umum: item.status_gizi_umum || '',
         tanggal_daftar: item.tanggal_daftar ? item.tanggal_daftar.split('T')[0].split(' ')[0] : '',
@@ -536,20 +595,53 @@ export default {
 
       editingId.value = item.id_penerima
       showAddForm.value = true
+      
+      // Scroll to form after DOM update
+      setTimeout(() => {
+        if (penerimaFormCard.value) {
+          penerimaFormCard.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
     }
 
     const deletePenerimaManfaat = async (id) => {
-      if (confirm('Apakah Anda yakin ingin menghapus data penerima manfaat ini?')) {
+      // Find the penerima data to show in confirmation
+      const penerima = penerimaManfaatData.value.find(item => item.id_penerima === id)
+      
+      const result = await Swal.fire({
+        title: 'Hapus Penerima Manfaat?',
+        html: `
+          <div style="text-align: left; margin: 20px 0;">
+            <p style="margin-bottom: 10px;"><strong>Anda akan menghapus:</strong></p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545;">
+              <p style="margin: 5px 0;"><strong>Kode:</strong> ${penerima?.kode_lembaga || '-'}</p>
+              <p style="margin: 5px 0;"><strong>Nama Lembaga:</strong> ${penerima?.nama_lembaga || '-'}</p>
+              <p style="margin: 5px 0;"><strong>Jenis:</strong> ${penerima?.nama_jenis_penerima || '-'}</p>
+              <p style="margin: 5px 0;"><strong>Lokasi:</strong> ${penerima?.kabupaten_kota || '-'}</p>
+            </div>
+            <p style="margin-top: 15px; color: #dc3545;"><strong>⚠️ Data yang dihapus tidak dapat dikembalikan!</strong></p>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        width: '500px'
+      })
+      
+      if (result.isConfirmed) {
         try {
           loading.value = true
           await penerimaManfaatService.delete(id)
           await fetchPenerimaManfaatData()
           // Regenerate preview kode after deletion
           generatePreviewKodeLembaga()
-          alert('Penerima manfaat berhasil dihapus!')
+          toast.success('Penerima manfaat berhasil dihapus!')
         } catch (err) {
           console.error('Error deleting penerima manfaat:', err)
-          alert('Gagal menghapus data: ' + (err.response?.data?.message || err.message))
+          toast.error('Gagal menghapus data: ' + (err.response?.data?.message || err.message))
         } finally {
           loading.value = false
         }
@@ -579,7 +671,6 @@ export default {
         provinsi: '',
         jumlah_siswa: '',
         porsi_besar: 0,
-        porsi_sedang: 0,
         porsi_kecil: 0,
         status_gizi_umum: '',
         tanggal_daftar: '',
@@ -617,20 +708,18 @@ export default {
     })
 
     return {
-      // State
       showAddForm,
+      penerimaFormCard,
       penerimaManfaatData,
       jenisPenerimaList,
       jenisPorsiList,
       loading,
       error,
       editingId,
+      searchQuery,
+      filteredPenerimaManfaatData,
       form,
-
-      // Computed
       hasPenerimaManfaatData,
-
-      // Methods
       fetchPenerimaManfaatData,
       savePenerimaManfaat,
       editPenerimaManfaat,
@@ -679,5 +768,18 @@ export default {
   background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+/* Scrollable Table Styles */
+.table-scrollable {
+  max-height: 70vh;
+  overflow-y: auto;
+}
+
+.table-scrollable thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Optional: adds subtle shadow to header */
 }
 </style>

@@ -19,6 +19,28 @@
       </button>
     </div>
 
+    <!-- Search Filter -->
+    <div v-if="!showAddForm" class="card mb-4 shadow-sm border-0">
+        <div class="card-body p-3">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0">
+                            <i class="bi bi-search text-muted"></i>
+                        </span>
+                        <input 
+                            type="text" 
+                            class="form-control border-start-0 ps-0" 
+                            placeholder="Cari nama atau kode menu..." 
+                            v-model="searchQuery" 
+                            @input="debouncedSearch"
+                        >
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading indicator -->
     <div v-if="loading" class="text-center py-5">
       <div class="spinner-border text-primary" role="status">
@@ -53,12 +75,21 @@
     </div>
 
     <!-- Form tambah menu -->
-    <div v-if="showAddForm" class="card mb-4 shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
+    <div v-if="showAddForm" class="card mb-4 shadow-sm" ref="menuFormCard">
+      <div class="card-header bg-gradient-primary text-white py-3 d-flex justify-content-between align-items-center">
         <h5 class="mb-0">
           <i class="bi bi-plus-circle me-2"></i>
           {{ editingId ? 'Edit Data Menu' : 'Tambah Data Menu' }}
         </h5>
+        <button 
+          type="button" 
+          class="btn btn-sm btn-light rounded-circle" 
+          @click="cancelAdd"
+          title="Tutup Form"
+          style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
+        >
+          <i class="bi bi-x-lg text-dark"></i>
+        </button>
       </div>
       <div class="card-body">
         <form @submit.prevent="saveMenu">
@@ -200,29 +231,19 @@
           <!-- Bahan Baku Section -->
           <div class="row">
             <div class="col-md-12 mb-3">
-              <div class="d-flex justify-content-between align-items-center mb-3">
-                <label class="form-label mb-0">Bahan Baku</label>
-                <button
-                  type="button"
-                  class="btn btn-primary rounded-pill px-4"
-                  @click="addBahanBakuField"
-                >
-                  <i class="bi bi-plus-circle me-1"></i>
-                  Tambah Bahan Baku
-                </button>
-              </div>
+              <label class="form-label mb-3">Bahan Baku</label>
 
               <div class="bahan-baku-section">
-                <div v-if="form.bahan_baku.length === 0" class="bahan-baku-empty">
+                <div v-if="form.bahan_baku.length === 0" class="bahan-baku-empty mb-3">
                   <i class="bi bi-basket"></i>
                   <p>Belum ada bahan baku ditambahkan</p>
-                  <small>Klik tombol "Tambah Bahan Baku" untuk memulai</small>
+                  <small>Klik tombol di bawah untuk memulai</small>
                 </div>
 
                 <div v-for="(bahan, index) in form.bahan_baku" :key="index" class="card mb-2">
                   <div class="card-body py-2">
                     <div class="row align-items-center">
-                      <div class="col-md-5">
+                      <div class="col-md-6">
                         <v-select
                           v-model="bahan.id_bahan_baku"
                           :options="bahanBakuList"
@@ -231,23 +252,12 @@
                           placeholder="Cari Bahan Baku"
                         ></v-select>
                       </div>
-                      <div class="col-md-3">
-                        <input
-                          v-model="bahan.jumlah_bahan"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          class="form-control form-control-sm"
-                          placeholder="Jumlah"
-                          required
-                        >
-                      </div>
-                      <div class="col-md-3">
+                      <div class="col-md-5">
                         <input
                           v-model="bahan.keterangan"
                           type="text"
                           class="form-control form-control-sm"
-                          placeholder="Keterangan"
+                          placeholder="Keterangan (Opsional)"
                         >
                       </div>
                       <div class="col-md-1">
@@ -263,6 +273,16 @@
                     </div>
                   </div>
                 </div>
+
+                <!-- Tombol Tambah di Bawah -->
+                <button
+                  type="button"
+                  class="btn btn-outline-primary w-100 border-2 border-dashed py-2 mt-2"
+                  @click="addBahanBakuField"
+                >
+                  <i class="bi bi-plus-circle me-1"></i>
+                  Tambah Bahan Baku
+                </button>
               </div>
             </div>
           </div>
@@ -374,11 +394,13 @@
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick } from 'vue'
 import menuService from '@/services/menuService'
 import bahanBakuService from '@/services/bahanBakuService'
 import vSelect from 'vue-select'
 import 'vue-select/dist/vue-select.css'
+import { useToast } from 'vue-toastification'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'MenuView',
@@ -386,12 +408,20 @@ export default {
     vSelect
   },
   setup() {
+    // Toast notification
+    const toast = useToast()
+    
     // State management
     const showAddForm = ref(false)
     const menuData = ref([])
     const bahanBakuList = ref([])
     const loading = ref(false)
     const error = ref('')
+    const searchQuery = ref('')
+    let searchTimeout = null
+    
+    // Ref for form card (for auto-scroll)
+    const menuFormCard = ref(null)
 
     // Form data
     const form = ref({
@@ -422,7 +452,13 @@ export default {
       try {
         loading.value = true
         error.value = ''
-        const response = await menuService.getAll()
+        
+        const params = {}
+        if (searchQuery.value) {
+            params.search = searchQuery.value
+        }
+
+        const response = await menuService.getAll(params)
         menuData.value = response.data || response.data?.data || response || []
         console.log('Menu data fetched:', menuData.value)
       } catch (err) {
@@ -436,7 +472,8 @@ export default {
     
     const fetchBahanBaku = async () => {
       try {
-        const response = await bahanBakuService.getAll()
+        // Fetch all items (virtually unlimited) to ensure dropdown works correctly
+        const response = await bahanBakuService.getAll({ per_page: 9999 })
         bahanBakuList.value = response.data || response.data?.data || response || []
       } catch (err) {
         console.error('Error fetching bahan baku:', err)
@@ -450,6 +487,8 @@ export default {
         console.log('Form data to be saved:', form.value)
 
         let response
+        const isEditing = !!editingId.value // Check before reset
+        
         if (editingId.value) {
           response = await menuService.update(editingId.value, form.value)
           const index = menuData.value.findIndex(item => item.id_menu === editingId.value)
@@ -472,6 +511,13 @@ export default {
         editingId.value = null
 
         console.log('Menu saved successfully:', response)
+        
+        // Show success toast based on action
+        if (isEditing) {
+          toast.success('Menu berhasil diperbarui!')
+        } else {
+          toast.success('Menu berhasil ditambahkan!')
+        }
 
         await fetchMenuData()
       } catch (err) {
@@ -479,9 +525,13 @@ export default {
         if (err.response?.data?.errors) {
           console.error('Validation errors:', err.response.data.errors)
           const errorMessages = Object.values(err.response.data.errors).flat()
-          alert('Validasi gagal: ' + errorMessages.join(', '))
+          toast.error('Validasi gagal: ' + errorMessages.join(', '), {
+            timeout: 5000
+          })
         } else {
-          alert('Gagal menyimpan data menu: ' + (err.response?.data?.message || err.message))
+          toast.error('Gagal menyimpan data menu: ' + (err.response?.data?.message || err.message), {
+            timeout: 5000
+          })
         }
       } finally {
         loading.value = false
@@ -522,22 +572,56 @@ export default {
         console.log('Form after edit:', form.value)
       } catch (err) {
         console.error('Error fetching menu details:', err)
-        alert('Gagal memuat detail menu: ' + (err.response?.data?.message || err.message))
+        toast.error('Gagal memuat detail menu: ' + (err.response?.data?.message || err.message))
       } finally {
         loading.value = false
       }
+      
+      // Scroll to form after everything is done (moved outside try-catch)
+      // Use setTimeout to ensure DOM is fully updated
+      setTimeout(() => {
+        if (menuFormCard.value) {
+          menuFormCard.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      }, 100)
     }
 
     const deleteMenu = async (id) => {
-      if (confirm('Apakah Anda yakin ingin menghapus data menu ini?')) {
+      // Find the menu data to show in confirmation
+      const menu = menuData.value.find(item => item.id_menu === id)
+      
+      const result = await Swal.fire({
+        title: 'Hapus Menu?',
+        html: `
+          <div style="text-align: left; margin: 20px 0;">
+            <p style="margin-bottom: 10px;"><strong>Anda akan menghapus:</strong></p>
+            <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #dc3545;">
+              <p style="margin: 5px 0;"><strong>Kode:</strong> ${menu?.kode_menu || '-'}</p>
+              <p style="margin: 5px 0;"><strong>Nama:</strong> ${menu?.nama_menu || '-'}</p>
+              <p style="margin: 5px 0;"><strong>Kategori:</strong> ${menu?.kategori || '-'}</p>
+            </div>
+            <p style="margin-top: 15px; color: #dc3545;"><strong>⚠️ Data yang dihapus tidak dapat dikembalikan!</strong></p>
+          </div>
+        `,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal',
+        width: '500px'
+      })
+      
+      if (result.isConfirmed) {
         try {
           loading.value = true
           await menuService.delete(id)
           menuData.value = menuData.value.filter(item => item.id_menu !== id)
+          toast.success('Menu berhasil dihapus')
           console.log('Menu deleted with id:', id)
         } catch (err) {
           console.error('Error deleting menu:', err)
-          alert('Gagal menghapus data menu')
+          toast.error('Gagal menghapus menu: ' + (err.response?.data?.message || err.message))
         } finally {
           loading.value = false
         }
@@ -553,7 +637,7 @@ export default {
     const addBahanBakuField = () => {
       form.value.bahan_baku.push({
         id_bahan_baku: '',
-        jumlah_bahan: '',
+        jumlah_bahan: 0,
         keterangan: ''
       })
     }
@@ -598,6 +682,13 @@ export default {
       }
     })
 
+    const debouncedSearch = () => {
+        if (searchTimeout) clearTimeout(searchTimeout)
+        searchTimeout = setTimeout(() => {
+            fetchMenuData()
+        }, 500)
+    }
+
     // Lifecycle
     onMounted(() => {
       console.log('🟢 MenuView component mounted successfully!')
@@ -606,19 +697,17 @@ export default {
     })
 
     return {
-      // State
       showAddForm,
+      menuFormCard,
       menuData,
       bahanBakuList,
-      form,
       loading,
       error,
-      editingId,
-
-      // Computed
       hasMenuData,
-
-      // Methods
+      form,
+      editingId,
+      searchQuery,
+      debouncedSearch,
       fetchMenuData,
       saveMenu,
       editMenu,
@@ -627,7 +716,7 @@ export default {
       addBahanBakuField,
       removeBahanBakuField,
       generateKodeMenu,
-      resetForm
+      resetForm,
     }
   }
 }
@@ -790,6 +879,20 @@ export default {
   padding: 1.5rem;
   background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
   transition: all 0.3s ease;
+  overflow: visible !important;
+}
+
+.bahan-baku-section .card {
+  overflow: visible !important;
+}
+
+.bahan-baku-section .card:focus-within {
+  z-index: 100 !important;
+  position: relative;
+}
+
+.bahan-baku-section .card-body {
+  overflow: visible !important;
 }
 
 .bahan-baku-section:hover {
@@ -838,5 +941,12 @@ export default {
     padding: 0.75rem 0.5rem;
     font-size: 0.875rem;
   }
+}
+</style>
+
+<style>
+/* Global styles for vue-select appended to body */
+.vs__dropdown-menu {
+  z-index: 9999 !important;
 }
 </style>

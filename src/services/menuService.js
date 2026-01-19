@@ -1,9 +1,9 @@
 import apiClient from './api'
 
 class MenuService {
-  async getAll() {
+  async getAll(params) {
     try {
-      const response = await apiClient.get('/menu')
+      const response = await apiClient.get('/menu', { params })
       return response.data
     } catch (error) {
       console.error('Error fetching menu data:', error)
