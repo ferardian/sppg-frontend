@@ -15,9 +15,11 @@ import PenerimaManfaatView from '@/views/transaction/PenerimaManfaatView.vue'
 import SupplierView from '@/views/master/SupplierView.vue'
 import StokOpnameView from '@/views/transaction/StokOpnameView.vue'
 import PenerimaanBarangView from '@/views/transaction/PenerimaanBarangView.vue'
+import LaporanSampahView from '@/views/transaction/LaporanSampahView.vue'
 import DistribusiMakananView from '@/views/transaction/DistribusiMakananView.vue'
 import UserManagementView from '@/views/master/UserManagementView.vue'
 import RecipeManagementView from '@/views/management/RecipeManagementView.vue'
+import MenuPermissionView from '@/views/management/MenuPermissionView.vue'
 
 const routes = [
   {
@@ -91,6 +93,11 @@ const routes = [
         component: PenerimaanBarangView
       },
       {
+        path: 'transactions/laporan-sampah',
+        name: 'LaporanSampah',
+        component: LaporanSampahView
+      },
+      {
         path: 'transactions/distribusi-makanan',
         name: 'DistribusiMakanan',
         component: DistribusiMakananView
@@ -125,6 +132,32 @@ const routes = [
         name: 'LaporanGaji',
         component: () => import('@/views/tools/SalaryLogView.vue')
       },
+      {
+        path: 'management/menu-permissions',
+        name: 'MenuPermissions',
+        component: MenuPermissionView
+      },
+      // Kader & Reports
+      {
+        path: 'master-data/kader',
+        name: 'Kader',
+        component: () => import('@/views/management/KaderView.vue')
+      },
+      {
+        path: 'reports/inventory',
+        name: 'InventoryReport',
+        component: () => import('@/views/reports/InventoryReportView.vue')
+      },
+      {
+        path: 'reports/operational',
+        name: 'OperationalReport',
+        component: () => import('@/views/reports/OperationalReportView.vue')
+      },
+      {
+        path: 'reports/kader-incentive',
+        name: 'KaderIncentiveReport',
+        component: () => import('@/views/reports/KaderIncentiveReportView.vue')
+      }
     ]
   },
   {

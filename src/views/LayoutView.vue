@@ -5,14 +5,18 @@
          :class="{ 'collapsed': isEffectivelyCollapsed }"
          @mouseenter="handleSidebarHover(true)"
          @mouseleave="handleSidebarHover(false)">
-      <div class="sidebar-header p-4 d-flex align-items-center" :class="isEffectivelyCollapsed ? 'justify-content-center' : 'justify-content-between'">
-        <h5 class="text-white mb-0 brand-logo" v-show="!isEffectivelyCollapsed" style="line-height: 1.3; max-width: 200px;">
-          <i class="bi bi-egg-fried me-2"></i>
-          {{ configStore.sppgName }}
-        </h5>
-        <h4 class="text-white mb-0 text-nowrap brand-logo-collapsed" v-show="isEffectivelyCollapsed">
-           <i class="bi bi-egg-fried"></i>
-        </h4>
+      <div class="sidebar-header p-3 mb-2 d-flex align-items-center justify-content-center" style="min-height: 70px;">
+        <div class="d-flex align-items-center w-100" v-if="!isEffectivelyCollapsed">
+          <img src="/logo.png" alt="Logo" class="me-2" style="width: 42px; height: 42px; object-fit: contain;">
+          <div class="brand-info">
+            <h6 class="text-white mb-0 fw-bold" style="line-height: 1.2; font-size: 1rem;">SPPG</h6>
+            <h6 class="text-white mb-0 small opacity-75" style="line-height: 1.1;">Simbangwetan</h6>
+          </div>
+          <span class="badge bg-danger ms-2" style="font-size: 0.5em; align-self: flex-start; margin-top: 2px;">DEV</span>
+        </div>
+        <div class="brand-logo-collapsed" v-else>
+           <img src="/logo.png" alt="Logo" style="width: 36px; height: 36px; object-fit: contain;">
+        </div>
       </div>
       
       <!-- Stylish Toggle Button -->
@@ -22,159 +26,34 @@
          </div>
       </div>
 
-      <!-- 
-        MENU STRUCTURE: 
-        Menu items didefinisikan di script section (variable menuItems).
-        Untuk menambah/edit/hapus menu, edit array menuItems di bawah.
-        Lihat MENU_STRUCTURE.md untuk dokumentasi lengkap.
-        
-        TODO: Refactor template ini untuk menggunakan v-for dari menuItems
-        agar otomatis sinkron dengan mobile sidebar.
-      -->
+      <!-- Sidebar Menu -->
       <ul class="nav flex-column">
-        <li class="nav-item">
-          <router-link to="/dashboard" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Dashboard' : ''">
-            <i class="bi bi-speedometer2 me-2"></i>
-            <span v-show="!isEffectivelyCollapsed">Dashboard</span>
-          </router-link>
-        </li>
+        <template v-for="(section, idx) in menuItems" :key="idx">
+          <!-- Section Title -->
+          <li class="nav-item mt-3" v-if="section.section !== 'main' && !isEffectivelyCollapsed && hasVisibleItems(section)">
+            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
+              {{ section.section }}
+            </h6>
+          </li>
+          <li class="nav-item" v-if="section.section !== 'main' && isEffectivelyCollapsed && hasVisibleItems(section)">
+             <div class="collapsed-divider"></div>
+          </li>
 
-        <!-- Master Data -->
-        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
-          <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-            Data Master
-          </h6>
-        </li>
-        <li class="nav-item" v-show="isEffectivelyCollapsed">
-           <div class="collapsed-divider"></div>
-        </li>
-        <li class="nav-item">
-          <router-link to="/master-data/sppg" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'SPPG' : ''">
-            <i class="bi bi-building me-2"></i>
-            <span v-show="!isEffectivelyCollapsed">SPPG</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/master-data/pegawai" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Pegawai' : ''">
-            <i class="bi bi-people me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Pegawai</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/master-data/jabatan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Jabatan' : ''">
-            <i class="bi bi-briefcase me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Jabatan</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/master-data/bahan-baku" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Bahan Baku' : ''">
-            <i class="bi bi-basket me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Bahan Baku</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/master-data/menu" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Menu' : ''">
-            <i class="bi bi-menu-app me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Menu</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/master-data/supplier" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Supplier' : ''">
-            <i class="bi bi-truck me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Supplier</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/master-data/user-management" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Manajemen User' : ''">
-            <i class="bi bi-people-fill me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Manajemen User</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Penerima Manfaat' : ''">
-            <i class="bi bi-person-check me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Penerima Manfaat</span>
-          </router-link>
-        </li>
-
-        <!-- Transactions -->
-        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
-          <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-            Transaksi
-          </h6>
-        </li>
-        <li class="nav-item" v-show="isEffectivelyCollapsed">
-           <div class="collapsed-divider"></div>
-        </li>
-
-        <li class="nav-item">
-          <router-link to="/transactions/penerimaan-barang" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Penerimaan Barang' : ''">
-            <i class="bi bi-truck me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Penerimaan Barang</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Stok Opname' : ''">
-            <i class="bi bi-clipboard-check me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Stok Opname</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/tools/shopping-list" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Rencana Menu' : ''">
-            <i class="bi bi-cart-check me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Rencana Menu</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/tools/rab" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Rencana Anggaran' : ''">
-            <i class="bi bi-wallet2 me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Rencana Anggaran</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/tools/buku-kas" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Buku Kas' : ''">
-            <i class="bi bi-cash-coin me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Buku Kas</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/tools/laporan-gaji" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Laporan Gaji' : ''">
-            <i class="bi bi-file-earmark-spreadsheet me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Laporan Gaji</span>
-          </router-link>
-        </li>
-
-        <li class="nav-item">
-          <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Distribusi Makanan' : ''">
-            <i class="bi bi-box-seam me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Distribusi Makanan</span>
-          </router-link>
-        </li>
-
-        <!-- Menu Management -->
-        <li class="nav-item mt-3" v-show="!isEffectivelyCollapsed">
-          <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-            Manajemen Menu
-          </h6>
-        </li>
-        <li class="nav-item" v-show="isEffectivelyCollapsed">
-           <div class="collapsed-divider"></div>
-        </li>
-        <li class="nav-item">
-          <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Komposisi Pangan' : ''">
-            <i class="bi bi-egg-fried me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Komposisi Pangan</span>
-          </router-link>
-        </li>
-        <li class="nav-item">
-          <router-link to="/management/recipe-management" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Resep & Kalkulator' : ''">
-            <i class="bi bi-journal-text me-2"></i>
-             <span v-show="!isEffectivelyCollapsed">Resep & Kalkulator</span>
-            <span class="badge bg-success ms-2" style="font-size: 0.6em;" v-show="!isEffectivelyCollapsed">NEW</span>
-          </router-link>
-        </li>
-
-
+          <!-- Items -->
+          <li v-for="item in section.items" :key="item.to" class="nav-item">
+            <router-link 
+              v-if="item.label === 'Dashboard' || authStore.hasAccess(getMenuKey(item))"
+              :to="item.to" 
+              class="nav-link" 
+              active-class="active" 
+              :title="isEffectivelyCollapsed ? item.label : ''"
+            >
+              <i :class="['bi', item.icon, 'me-2']"></i>
+              <span v-show="!isEffectivelyCollapsed">{{ item.label }}</span>
+              <span v-if="item.badge && !isEffectivelyCollapsed" class="badge bg-success ms-2" style="font-size: 0.6em;">{{ item.badge }}</span>
+            </router-link>
+          </li>
+        </template>
       </ul>
     </nav>
 
@@ -260,149 +139,46 @@
     </main>
 
     <!-- Mobile Sidebar -->
-    <!-- Added custom-mobile-sidebar class for styling -->
     <div class="offcanvas offcanvas-start custom-mobile-sidebar" tabindex="-1" id="mobileSidebar" style="z-index: 1050;">
       <div class="offcanvas-header text-white border-bottom border-white-10 d-flex align-items-center justify-content-between">
-        <h5 class="offcanvas-title brand-logo">
-          <i class="bi bi-egg-fried me-2"></i>
-          {{ configStore.sppgName }}
-        </h5>
         <div class="d-flex align-items-center">
-            <!-- Alternative arrow close button -->
+          <img src="/logo.png" alt="Logo" class="me-2" style="width: 42px; height: 42px; object-fit: contain;">
+          <div class="brand-info">
+            <h6 class="text-white mb-0 fw-bold" style="line-height: 1.2; font-size: 1rem;">SPPG</h6>
+            <h6 class="text-white mb-0 small opacity-75" style="line-height: 1.1;">Simbangwetan</h6>
+          </div>
+        </div>
+        <div class="d-flex align-items-center">
             <button type="button" class="btn btn-link text-white me-2 p-0" data-bs-dismiss="offcanvas" style="font-size: 1.5rem;">
                 <i class="bi bi-arrow-left-circle"></i>
             </button>
-            <!-- Standard close button (keep as backup/standard) -->
-            <!-- <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button> -->
         </div>
       </div>
       <div class="offcanvas-body p-0">
         <ul class="nav flex-column mobile-nav-list p-3">
-          <li class="nav-item">
-            <router-link to="/dashboard" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-speedometer2 me-2"></i>
-              Dashboard
-            </router-link>
-          </li>
-          <li class="nav-item mt-3">
-            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-              Data Master
-            </h6>
-          </li>
-          <li class="nav-item">
-            <router-link to="/master-data/sppg" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-building me-2"></i>
-              SPPG
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/master-data/pegawai" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-people me-2"></i>
-              Pegawai
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/master-data/jabatan" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-briefcase me-2"></i>
-              Jabatan
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/master-data/bahan-baku" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-basket me-2"></i>
-              Bahan Baku
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/master-data/menu" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-menu-app me-2"></i>
-              Menu
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/master-data/supplier" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-truck me-2"></i>
-              Supplier
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/master-data/user-management" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-people-fill me-2"></i>
-              Manajemen User
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/transactions/penerima-manfaat" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-person-check me-2"></i>
-              Penerima Manfaat
-            </router-link>
-          </li>
-          <li class="nav-item mt-3">
-            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-              Transaksi
-            </h6>
-          </li>
-          <li class="nav-item">
-            <router-link to="/transactions/penerimaan-barang" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-truck me-2"></i>
-              Penerimaan Barang
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-clipboard-check me-2"></i>
-              Stok Opname
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/tools/shopping-list" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-cart-check me-2"></i>
-              Rencana Menu
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/tools/rab" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-wallet2 me-2"></i>
-              Rencana Anggaran
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/tools/buku-kas" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-cash-coin me-2"></i>
-              Buku Kas
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/tools/laporan-gaji" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-file-earmark-spreadsheet me-2"></i>
-              Laporan Gaji
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/transactions/distribusi-makanan" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-box-seam me-2"></i>
-              Distribusi Makanan
-            </router-link>
-          </li>
-          
-          <!-- Menu Management -->
-          <li class="nav-item mt-3">
-            <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
-              Manajemen Menu
-            </h6>
-          </li>
-          <li class="nav-item">
-            <router-link to="/tools/komposisi-pangan" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-egg-fried me-2"></i>
-              Komposisi Pangan
-            </router-link>
-          </li>
-          <li class="nav-item">
-            <router-link to="/management/recipe-management" class="nav-link" active-class="active" @click="closeMobileMenu">
-              <i class="bi bi-journal-text me-2"></i>
-              Resep & Kalkulator
-            </router-link>
-          </li>
+          <template v-for="(section, idx) in menuItems" :key="'mob-' + idx">
+            <!-- Section Title -->
+            <li class="nav-item mt-3" v-if="section.section !== 'main' && hasVisibleItems(section)">
+              <h6 class="nav-section-title px-3 text-uppercase small text-white-50">
+                {{ section.section }}
+              </h6>
+            </li>
+
+            <!-- Items -->
+            <li v-for="item in section.items" :key="'mob-' + item.to" class="nav-item">
+              <router-link 
+                v-if="item.label === 'Dashboard' || authStore.hasAccess(getMenuKey(item))"
+                :to="item.to" 
+                class="nav-link" 
+                active-class="active" 
+                @click="closeMobileMenu"
+              >
+                <i :class="['bi', item.icon, 'me-2']"></i>
+                {{ item.label }}
+                <span v-if="item.badge" class="badge bg-success ms-2" style="font-size: 0.6em;">{{ item.badge }}</span>
+              </router-link>
+            </li>
+          </template>
         </ul>
       </div>
     </div>
@@ -422,7 +198,6 @@ export default {
     const router = useRouter()
     const route = useRoute()
     const authStore = useAuthStore()
-    
     const configStore = useConfigStore()
     
     // Centralized menu structure
@@ -439,6 +214,7 @@ export default {
           { to: '/master-data/sppg', icon: 'bi-building', label: 'SPPG' },
           { to: '/master-data/pegawai', icon: 'bi-people', label: 'Pegawai' },
           { to: '/master-data/jabatan', icon: 'bi-briefcase', label: 'Jabatan' },
+          { to: '/master-data/kader', icon: 'bi-person-vcard', label: 'Kader PIC' },
           { to: '/master-data/bahan-baku', icon: 'bi-basket', label: 'Bahan Baku' },
           { to: '/master-data/menu', icon: 'bi-menu-app', label: 'Menu' },
           { to: '/master-data/supplier', icon: 'bi-truck', label: 'Supplier' },
@@ -450,30 +226,37 @@ export default {
         section: 'Transaksi',
         items: [
           { to: '/transactions/penerimaan-barang', icon: 'bi-truck', label: 'Penerimaan Barang' },
+          { to: '/transactions/laporan-sampah', icon: 'bi-trash3', label: 'Laporan Sampah' },
           { to: '/transactions/stok-opname', icon: 'bi-clipboard-check', label: 'Stok Opname' },
           { to: '/tools/shopping-list', icon: 'bi-cart-check', label: 'Rencana Menu' },
           { to: '/tools/rab', icon: 'bi-wallet2', label: 'Rencana Anggaran' },
-          { to: '/tools/buku-kas', icon: 'bi-cash-coin', label: 'Buku Kas' },
-          { to: '/tools/laporan-gaji', icon: 'bi-file-earmark-spreadsheet', label: 'Laporan Gaji' },
           { to: '/transactions/distribusi-makanan', icon: 'bi-box-seam', label: 'Distribusi Makanan' }
+        ]
+      },
+      {
+        section: 'Laporan & Analisis',
+        items: [
+          { to: '/reports/inventory', icon: 'bi-box-seam', label: 'Laporan Bahan Baku' },
+          { to: '/reports/operational', icon: 'bi-activity', label: 'Laporan Operasional' },
+          { to: '/reports/kader-incentive', icon: 'bi-cash-stack', label: 'Laporan Insentif Kader' },
+          { to: '/tools/buku-kas', icon: 'bi-cash-coin', label: 'Buku Kas' },
+          { to: '/tools/laporan-gaji', icon: 'bi-file-earmark-spreadsheet', label: 'Laporan Gaji' }
         ]
       },
       {
         section: 'Manajemen Menu',
         items: [
           { to: '/tools/komposisi-pangan', icon: 'bi-egg-fried', label: 'Komposisi Pangan' },
-          { to: '/management/recipe-management', icon: 'bi-journal-text', label: 'Resep & Kalkulator', badge: 'NEW' }
+          { to: '/management/recipe-management', icon: 'bi-journal-text', label: 'Resep & Kalkulator', badge: 'NEW' },
+          { to: '/management/menu-permissions', icon: 'bi-shield-lock', label: 'Pengaturan Hak Akses' }
         ]
       }
     ]
     
-    // Sidebar collapse state
-    // Default to expanded
     const isSidebarCollapsed = ref(false)
     const isHovered = ref(false)
     const showUserMenu = ref(false)
     
-    // Sidebar is effectively collapsed only if "locked" collapsed AND not currently hovered
     const isEffectivelyCollapsed = computed(() => isSidebarCollapsed.value && !isHovered.value)
 
     const toggleSidebar = () => {
@@ -481,7 +264,6 @@ export default {
     }
 
     const handleSidebarHover = (value) => {
-        // Only trigger hover effects on desktop
         if (window.innerWidth >= 992) {
             isHovered.value = value
         }
@@ -510,11 +292,13 @@ export default {
         'Supplier': 'Data Supplier',
         'UserManagement': 'Manajemen User',
         'PenerimaanBarang': 'Penerimaan Barang',
+        'LaporanSampah': 'Laporan Sampah',
         'StokOpname': 'Stok Opname',
         'DistribusiMakanan': 'Distribusi Makanan',
         'KomposisiPangan': 'Komposisi Pangan',
         'BukuKas': 'Buku Kas & Keuangan',
-        'LaporanGaji': 'Laporan Gaji Relawan'
+        'LaporanGaji': 'Laporan Gaji Relawan',
+        'MenuPermissions': 'Pengaturan Hak Akses Menu'
       }
       return titles[routeName] || 'Dashboard'
     }
@@ -528,27 +312,30 @@ export default {
     }
 
     const closeMobileMenu = () => {
-      // Reliable way to close offcanvas without worrying about global bootstrap instance:
-      // Find the trigger button inside the offcanvas and click it.
       const mobileSidebar = document.getElementById('mobileSidebar')
       if (mobileSidebar) {
-        // Option 1: Try getting the bootstrap instance directly if available globally
         try {
             const bsOffcanvas = window.bootstrap?.Offcanvas?.getInstance(mobileSidebar)
             if (bsOffcanvas) {
                 bsOffcanvas.hide()
                 return
             }
-        } catch (e) {
-            // ignore
-        }
+        } catch (e) {}
         
-        // Option 2 (Fallback): Find the dismiss button and click it
         const closeBtn = mobileSidebar.querySelector('[data-bs-dismiss="offcanvas"]')
         if (closeBtn) {
             closeBtn.click()
         }
       }
+    }
+
+    const getMenuKey = (item) => {
+      const parts = item.to.split('/')
+      return parts[parts.length - 1]
+    }
+
+    const hasVisibleItems = (section) => {
+      return section.items.some(item => authStore.hasAccess(getMenuKey(item)))
     }
 
     return {
@@ -563,7 +350,9 @@ export default {
       toggleSidebar,
       handleSidebarHover,
       showUserMenu,
-      menuItems
+      menuItems,
+      hasVisibleItems,
+      getMenuKey
     }
   }
 }
@@ -590,18 +379,21 @@ export default {
   top: 0;
   left: 0;
   z-index: 1000;
-  box-shadow: 4px 0 15px rgba(0,0,0,0.05); /* Softer shadow */
+  box-shadow: 4px 0 15px rgba(0,0,0,0.05);
   overflow-y: auto;
-  overflow-x: hidden; /* Prevent horizontal scroll */
+  overflow-x: hidden;
   margin: 0;
   padding: 0;
-  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Smoother bezier transition */
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 
-/* Sidebar Branding */
 .brand-logo {
   font-weight: 800;
-  letter-spacing: 1px;
+  letter-spacing: 0.5px;
+}
+.brand-info {
+  display: flex;
+  flex-direction: column;
 }
 .brand-logo-collapsed {
   animation: fadeIn 0.5s;
@@ -612,7 +404,6 @@ export default {
   to { opacity: 1; }
 }
 
-/* Toggle Button Styling */
 .toggle-container {
   display: flex;
   justify-content: flex-end;
@@ -649,7 +440,7 @@ export default {
 .sidebar.collapsed .nav-link {
   justify-content: center;
   padding: 0.8rem 0;
-  margin: 0.2rem 0.5rem; /* Centered with margin */
+  margin: 0.2rem 0.5rem;
 }
 
 .sidebar.collapsed .nav-link i {
@@ -685,8 +476,8 @@ export default {
 .sidebar .nav-link {
   color: rgba(255, 255, 255, 0.8);
   padding: 0.85rem 1.5rem;
-  margin: 0.2rem 0.8rem; /* Add side margins for floating feel */
-  border-radius: 12px; /* More rounded */
+  margin: 0.2rem 0.8rem;
+  border-radius: 12px;
   transition: all 0.3s ease;
   text-decoration: none;
   display: flex;
@@ -698,14 +489,14 @@ export default {
 .sidebar .nav-link:hover {
   background: rgba(255, 255, 255, 0.15);
   color: white;
-  transform: translateX(3px); /* Subtle nudge */
+  transform: translateX(3px);
 }
 
 .sidebar .nav-link.active {
-  background: rgba(255, 255, 255, 0.25); /* Stronger active background */
+  background: rgba(255, 255, 255, 0.25);
   color: white;
   font-weight: 600;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Subtle depth */
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
   backdrop-filter: blur(5px);
 }
 
@@ -739,7 +530,6 @@ export default {
     width: 100vw;
     margin: 0;
   }
-
   .sidebar {
     transform: translateX(-100%);
   }
@@ -782,7 +572,6 @@ export default {
   color: white !important;
 }
 
-/* Ensure full width layout */
 .container-fluid {
   padding: 0 !important;
   width: 100%;
@@ -790,13 +579,11 @@ export default {
   margin: 0 !important;
 }
 
-/* Override global reset for page content */
 .main-content .container-fluid {
   padding: 0 !important;
   margin: 0 !important;
 }
 
-/* Fix navbar width */
 .navbar {
   width: 100%;
   margin: 0;
@@ -809,28 +596,23 @@ export default {
   width: 100%;
 }
 
-/* Remove padding from row elements */
 .row {
   margin: 0;
 }
 
-/* Remove all padding from cards container */
 .main-content .row > * {
   padding-left: 0.75rem;
   padding-right: 0.75rem;
 }
 
-/* Full width dashboard cards */
 .dashboard-card {
   margin: 0 0 1rem 0;
 }
 
-/* Remove any default margins */
 .card {
   margin-bottom: 1rem;
 }
 
-/* Custom Breadcrumb Styles */
 .custom-breadcrumb {
   font-size: 0.875rem;
   display: inline-block;
@@ -879,17 +661,15 @@ export default {
   opacity: 0.5;
 }
 
-/* Helper for mobile menu scrolling */
 .mobile-nav-list {
-  padding-bottom: 100px !important; /* Ensure last item is reachable */
+  padding-bottom: 100px !important;
 }
 
-/* Match mobile sidebar aesthetic to desktop */
 .custom-mobile-sidebar {
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
   color: white;
-  width: 75vw !important; /* 3/4 width */
-  max-width: 320px !important; /* Cap it for larger mobile screens/tablets */
+  width: 75vw !important;
+  max-width: 320px !important;
 }
 
 .custom-mobile-sidebar .offcanvas-header {
@@ -914,10 +694,9 @@ export default {
   color: white !important;
 }
 
-/* Override existing offcanvas body link styles if any conflict */
 .offcanvas-body .nav-link:hover,
 .offcanvas-body .nav-link.active {
-  background: rgba(255, 255, 255, 0.15); /* Match desktop hover */
+  background: rgba(255, 255, 255, 0.15);
   color: white;
 }
 
@@ -925,7 +704,6 @@ export default {
   border-color: rgba(255, 255, 255, 0.1) !important;
 }
 
-/* Force scrollability to enable pull-to-refresh on mobile */
 .page-content-wrapper {
   min-height: calc(100vh + 1px);
 }

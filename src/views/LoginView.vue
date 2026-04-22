@@ -8,8 +8,8 @@
               <!-- Logo/Header -->
               <div class="text-center mb-4">
                 <div class="mb-3">
-                  <div class="logo-circle rounded-circle d-inline-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px;">
-                    <i class="bi bi-egg-fried text-white" style="font-size: 2.5rem;"></i>
+                  <div class="logo-circle rounded-circle d-inline-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px; background: white; border: 2px solid #667eea;">
+                    <img src="/logo.png" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
                   </div>
                 </div>
                 <h2 class="fw-bold mb-2 brand-text">{{ configStore.sppgName }}</h2>
