@@ -210,7 +210,19 @@ export default {
     }
 
     const closeModal = () => {
+      // If closing manually (not via popstate), and state exists, pop it
+      if (props.isVisible && window.history.state?.modalOpen) {
+        window.history.back()
+      }
       emit('close')
+    }
+
+    const handlePopState = (event) => {
+      if (props.isVisible) {
+        // Modal is open, but state was popped (back button pressed)
+        // Just emit close, don't history.back() again
+        emit('close')
+      }
     }
 
     watch(() => props.isVisible, (newVal) => {
@@ -221,11 +233,17 @@ export default {
              keyboard: false
            })
         }
+        
+        // Push state for mobile back button
+        window.history.pushState({ modalOpen: true }, '')
+        window.addEventListener('popstate', handlePopState)
+        
         modalInstance.value?.show()
         // Reset search or keep it? Let's reset for fresh start
         if (items.value.length === 0) fetchData()
       } else {
         modalInstance.value?.hide()
+        window.removeEventListener('popstate', handlePopState)
       }
     })
 

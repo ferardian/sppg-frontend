@@ -502,7 +502,7 @@ export default {
         console.log('Penerima manfaat data loaded:', response.data)
       } catch (err) {
         console.error('Error fetching penerima manfaat:', err)
-        error.value = 'Gagal memuat data penerima manfaat: ' + (err.response?.data?.message || err.message)
+        error.value = 'Gagal memuat data penerima manfaat: ' + (err.message || 'Terjadi kesalahan sistem')
       } finally {
         loading.value = false
       }
@@ -558,12 +558,13 @@ export default {
       } catch (err) {
         console.error('Error saving penerima manfaat:', err)
 
-        if (err.response?.status === 422) {
-          const errors = err.response.data.errors
-          const errorMessages = Object.values(errors).flat()
-          toast.error('Validasi gagal: ' + errorMessages.join(', '), { timeout: 5000 })
+        // Handle validation errors from Laravel (err is already error.response.data due to interceptor)
+        if (err.errors) {
+          console.error('Validation errors:', err.errors)
+          const errorMessages = Object.values(err.errors).flat()
+          toast.error('Validasi gagal: ' + errorMessages.join(', '), { timeout: 7000 })
         } else {
-          toast.error('Gagal menyimpan data penerima manfaat: ' + (err.response?.data?.message || err.message), { timeout: 5000 })
+          toast.error('Gagal menyimpan data penerima manfaat: ' + (err.message || 'Terjadi kesalahan sistem'), { timeout: 5000 })
         }
       } finally {
         loading.value = false
@@ -641,7 +642,7 @@ export default {
           toast.success('Penerima manfaat berhasil dihapus!')
         } catch (err) {
           console.error('Error deleting penerima manfaat:', err)
-          toast.error('Gagal menghapus data: ' + (err.response?.data?.message || err.message))
+          toast.error('Gagal menghapus data: ' + (err.message || 'Terjadi kesalahan sistem'))
         } finally {
           loading.value = false
         }

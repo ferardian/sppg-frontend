@@ -559,7 +559,7 @@ export default {
 
         console.log('Bahan Baku data fetched with stock:', bahanBakuData.value)
       } catch (err) {
-        error.value = 'Gagal memuat data bahan baku: ' + (err.response?.data?.message || err.message)
+        error.value = 'Gagal memuat data bahan baku: ' + (err.message || 'Terjadi kesalahan sistem')
         console.error('Error fetching bahan baku data:', err)
       } finally {
         loading.value = false
@@ -616,14 +616,16 @@ export default {
         await fetchBahanBakuData()
       } catch (err) {
         console.error('Error saving bahan baku:', err)
-        if (err.response?.data?.errors) {
-          console.error('Validation errors:', err.response.data.errors)
-          const errorMessages = Object.values(err.response.data.errors).flat()
+        
+        // Handle validation errors from Laravel (err is already error.response.data due to interceptor)
+        if (err.errors) {
+          console.error('Validation errors:', err.errors)
+          const errorMessages = Object.values(err.errors).flat()
           toast.error('Validasi gagal: ' + errorMessages.join(', '), {
-            timeout: 5000
+            timeout: 7000 // Show longer for readability
           })
         } else {
-          toast.error('Gagal menyimpan data bahan baku: ' + (err.response?.data?.message || err.message), {
+          toast.error('Gagal menyimpan data bahan baku: ' + (err.message || 'Terjadi kesalahan sistem'), {
             timeout: 5000
           })
         }
@@ -697,7 +699,7 @@ export default {
           console.log('Bahan Baku deleted with id:', id)
         } catch (err) {
             console.error('Error deleting bahan baku:', err)
-            toast.error('Gagal menghapus bahan baku: ' + (err.response?.data?.message || err.message))
+            toast.error('Gagal menghapus bahan baku: ' + (err.message || 'Terjadi kesalahan sistem'))
         } finally {
             loading.value = false
         }
@@ -773,7 +775,12 @@ export default {
         masterForm.value = { id: null, name: '' } // Reset form
       } catch (err) {
         console.error('Error saving master data:', err)
-        toast.error('Gagal menyimpan data: ' + (err.response?.data?.message || err.message))
+        if (err.errors) {
+          const errorMessages = Object.values(err.errors).flat()
+          toast.error('Gagal: ' + errorMessages.join(', '))
+        } else {
+          toast.error('Gagal menyimpan data: ' + (err.message || 'Terjadi kesalahan sistem'))
+        }
       } finally {
         masterLoading.value = false
       }

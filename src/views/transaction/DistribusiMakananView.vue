@@ -10,7 +10,7 @@
       <button
         class="btn btn-primary btn-lg rounded-pill px-4"
         style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
-        @click="showAddForm = true"
+        @click="openAddForm"
         :disabled="loading"
       >
         <i class="bi bi-plus-circle me-2"></i>Catat Distribusi
@@ -239,7 +239,7 @@
                 </div>
                 <div v-if="plannedDistributions.length > 0" class="d-flex flex-wrap gap-2">
                    <button 
-                      v-for="(item, idx) in plannedDistributions" 
+                      v-for="(item, idx) in plannedDistributions.filter(p => p.portion_id !== null)" 
                       :key="idx"
                       type="button"
                       class="btn btn-sm btn-outline-primary d-flex align-items-center"
@@ -485,8 +485,14 @@
                           <i class="bi bi-exclamation-circle text-warning me-1"></i>Belum terhubung
                         </small>
                       </td>
-                      <td class="text-center border-start border-end bg-light fw-bold">
-                           {{ formatNumber(bahan.jumlah_bahan) }}
+                      <td class="text-center border-start border-end bg-light p-0" style="width: 80px">
+                        <input 
+                          type="number" 
+                          v-model.number="bahan.jumlah_bahan" 
+                          class="form-control form-control-sm text-center border-0 fw-bold bg-transparent"
+                          step="0.1"
+                          @input="calculateTotalKalori"
+                        >
                       </td>
                       <td class="text-end" :class="{'text-muted': !bahan.included}">
                         {{ bahan.komposisi_pangan ? formatNumber(getCalculatedNutrition(bahan, 'kalori')) : '-' }}
@@ -1404,42 +1410,9 @@ export default {
            
            const data = res.data.data
            const plan = data.plan
-           const details = data.details // Raw details with berat_bersih
-           
-           // Group Details by Menu + Portion Type
-           const groups = {}
-           
-           details.forEach(d => {
-               // Only process items that are linked to a menu and portion
-               if (!d.id_menu || !d.id_jenis_porsi) return
-               
-               const key = `${d.id_menu}_${d.id_jenis_porsi}`
-               if (!groups[key]) {
-                   const menu = this.menuList.find(m => m.id_menu == d.id_menu)
-                   const porsi = this.jenisPorsiList.find(p => p.id_jenis_porsi == d.id_jenis_porsi)
-                   
-                   groups[key] = {
-                       id_unique: key,
-                       menu_id: d.id_menu,
-                       menu_name: menu ? menu.nama_menu : `Menu ${d.id_menu}`,
-                       portion_id: d.id_jenis_porsi,
-                       portion_name: porsi ? porsi.nama_jenis_porsi : `Porsi ${d.id_jenis_porsi}`,
-                       ingredients: [],
-                       quantity: 0
-                   }
-               }
-               
-               groups[key].ingredients.push({
-                   id_bahan_baku: d.id_bahan_baku,
-                   nama_bahan_baku: d.bahan_baku ? d.bahan_baku.nama_bahan_baku : 'Unknown', // Grab from relation
-                   berat_bersih: parseFloat(d.berat_bersih || 0),
-                   komposisi_pangan: d.bahan_baku ? d.bahan_baku.komposisi_pangan : null // Grab from relation
-               })
-           })
-           
-            // Calculate Quantity based on distribution map (beneficiary count x portion count)
+           const details = data.details
            const distMap = plan.distributions || {}
-           
+
            const getIdPorsiByName = (name) => {
                 if (!this.jenisPorsiList) return null
                 const found = this.jenisPorsiList.find(p => p.nama_jenis_porsi.toLowerCase().includes(name.toLowerCase()))
@@ -1448,39 +1421,110 @@ export default {
            const idKecil = getIdPorsiByName('kecil')
            const idBesar = getIdPorsiByName('besar')
            const idSedang = getIdPorsiByName('sedang')
-
-           for (const [key, group] of Object.entries(groups)) {
-               const beneficiaries = distMap[group.menu_id] || []
-               let totalQty = 0
+           
+           // 1. Group by Menu first
+           const menuGroups = {}
+           
+           details.forEach(d => {
+               if (!d.id_menu) return
                
+               if (!menuGroups[d.id_menu]) {
+                   const menu = this.menuList.find(m => m.id_menu == d.id_menu)
+                   menuGroups[d.id_menu] = {
+                       menu_id: d.id_menu,
+                       menu_name: menu ? menu.nama_menu : `Menu ${d.id_menu}`,
+                       portions: {}, // portion_id -> { ingredients: [] }
+                       bulk_ingredients: []
+                   }
+               }
+               
+               const mGroup = menuGroups[d.id_menu]
+               const ingredient = {
+                   id_bahan_baku: d.id_bahan_baku,
+                   nama_bahan_baku: d.bahan_baku ? d.bahan_baku.nama_bahan_baku : 'Unknown',
+                   berat_bersih: parseFloat(d.berat_bersih || 0),
+                   komposisi_pangan: d.bahan_baku ? d.bahan_baku.komposisi_pangan : null
+               }
+               
+               if (d.id_jenis_porsi === null) {
+                   mGroup.bulk_ingredients.push(ingredient)
+               } else {
+                   if (!mGroup.portions[d.id_jenis_porsi]) {
+                       mGroup.portions[d.id_jenis_porsi] = { ingredients: [] }
+                   }
+                   mGroup.portions[d.id_jenis_porsi].ingredients.push(ingredient)
+               }
+           })
+           
+           // 2. Process each portion button
+           const finalButtons = []
+           
+           for (const [mid, mGroup] of Object.entries(menuGroups)) {
+               // Calculate total portions for this menu (to calculate bulk weight per portion)
+               const beneficiaries = distMap[mid] || []
+               let totalPortionsForMenu = 0
+               const benDetails = []
+
                if (Array.isArray(beneficiaries)) {
-                    beneficiaries.forEach(bid => {
-                        const ben = this.penerimaList.find(b => b.id_penerima == bid)
-                        if (!ben) return
-                        
-                        // Check which portion type this Group is for
-                        if (group.portion_id == idBesar) {
-                            totalQty += Number(ben.porsi_besar || 0)
-                        } else if (group.portion_id == idKecil) {
-                            totalQty += Number(ben.porsi_kecil || 0)
-                        } else if (idSedang && group.portion_id == idSedang) {
-                            totalQty += Number(ben.porsi_sedang || 0)
-                        } 
-                    })
-                    
-                   if (totalQty === 0 && beneficiaries.length > 0) {
-                        // If no portion config found on beneficiary, default to 1 per beneficiary
-                        // But only if this Group matches some default logic? 
-                        // Let's just assume count = beneficiaries for robust fallback
-                         totalQty = beneficiaries.length 
+                   beneficiaries.forEach(bid => {
+                       const ben = this.penerimaList.find(b => b.id_penerima == bid)
+                       if (!ben) return
+                       benDetails.push(ben)
+                       totalPortionsForMenu += (Number(ben.porsi_besar || 0) + Number(ben.porsi_sedang || 0) + Number(ben.porsi_kecil || 0))
+                   })
+                   
+                   if (totalPortionsForMenu === 0 && beneficiaries.length > 0) {
+                       totalPortionsForMenu = beneficiaries.length // Fallback
                    }
                }
 
-               group.quantity = totalQty
+               // Identify portion types
+               const portionTypesInMenu = Object.keys(mGroup.portions).length > 0 
+                   ? Object.keys(mGroup.portions) 
+                   : [idKecil, idBesar, idSedang].filter(id => id !== null)
+
+               portionTypesInMenu.forEach(pId => {
+                   let q = 0
+                   benDetails.forEach(ben => {
+                       if (pId == idBesar) q += Number(ben.porsi_besar || 0)
+                       else if (pId == idKecil) q += Number(ben.porsi_kecil || 0)
+                       else if (idSedang && pId == idSedang) q += Number(ben.porsi_sedang || 0)
+                   })
+                   
+                   if (q === 0 && beneficiaries.length > 0 && Object.keys(mGroup.portions).length === 0) {
+                       return 
+                   }
+                   if (q === 0) q = 1
+
+                   const porsi = this.jenisPorsiList.find(p => p.id_jenis_porsi == pId)
+                   
+                   const mergedIngredients = [
+                       ...(mGroup.portions[pId] ? mGroup.portions[pId].ingredients : [])
+                   ]
+                   
+                   mGroup.bulk_ingredients.forEach(bi => {
+                       mergedIngredients.push({
+                           ...bi,
+                           berat_bersih: 0 // Keep at 0 for manual adjustment
+                       })
+                   })
+
+                   if (mergedIngredients.length > 0) {
+                       finalButtons.push({
+                           id_unique: `${mid}_${pId}`,
+                           menu_id: mid,
+                           menu_name: mGroup.menu_name,
+                           portion_id: pId,
+                           portion_name: porsi ? porsi.nama_jenis_porsi : `Porsi ${pId}`,
+                           ingredients: mergedIngredients,
+                           quantity: q
+                       })
+                   }
+               })
            }
            
-           this.plannedDistributions = Object.values(groups)
-                      if (plan.tanggal_rencana && !this.isEdit) {
+           this.plannedDistributions = finalButtons
+           if (plan.tanggal_rencana && !this.isEdit) {
                 this.form.tanggal_distribusi = this.formatDateForInput(plan.tanggal_rencana)
             }
            
@@ -1599,6 +1643,15 @@ export default {
           this.loading = false
         }
       }
+    },
+    openAddForm() {
+      this.showAddForm = true
+      // Scroll to form after it's rendered
+      this.$nextTick(() => {
+        if (this.$refs.formCard) {
+          this.$refs.formCard.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+      })
     },
     resetForm() {
       this.isEdit = false

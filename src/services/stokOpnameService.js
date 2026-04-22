@@ -26,7 +26,23 @@ const stokOpnameService = {
   // Create new stok opname
   async create(data) {
     try {
-      const response = await apiClient.post('/stok-opname', data)
+      let payload = data
+      let headers = {}
+
+      // Check if data should be sent as FormData (if it has a file)
+      const hasFile = data.foto_barang instanceof File
+      
+      if (hasFile) {
+        payload = new FormData()
+        Object.keys(data).forEach(key => {
+          if (data[key] !== null && data[key] !== undefined) {
+            payload.append(key, data[key])
+          }
+        })
+        headers = { 'Content-Type': 'multipart/form-data' }
+      }
+
+      const response = await apiClient.post('/stok-opname', payload, { headers })
       return response.data
     } catch (error) {
       console.error('Error creating stok opname:', error)
@@ -37,6 +53,27 @@ const stokOpnameService = {
   // Update stok opname
   async update(id, data) {
     try {
+      let payload = data
+      let headers = {}
+
+      // Laravel workaround for PUT with files: use POST and append _method=PUT
+      const hasFile = data.foto_barang instanceof File
+      
+      if (hasFile) {
+        payload = new FormData()
+        Object.keys(data).forEach(key => {
+          if (data[key] !== null && data[key] !== undefined) {
+            payload.append(key, data[key])
+          }
+        })
+        payload.append('_method', 'PUT')
+        headers = { 'Content-Type': 'multipart/form-data' }
+        
+        // Use POST instead of PUT for multipart
+        const response = await apiClient.post(`/stok-opname/${id}`, payload, { headers })
+        return response.data
+      }
+
       const response = await apiClient.put(`/stok-opname/${id}`, data)
       return response.data
     } catch (error) {

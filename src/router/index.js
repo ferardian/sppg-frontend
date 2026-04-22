@@ -14,6 +14,7 @@ import MenuView from '@/views/master/MenuView.vue'
 import PenerimaManfaatView from '@/views/transaction/PenerimaManfaatView.vue'
 import SupplierView from '@/views/master/SupplierView.vue'
 import StokOpnameView from '@/views/transaction/StokOpnameView.vue'
+import PenerimaanBarangView from '@/views/transaction/PenerimaanBarangView.vue'
 import DistribusiMakananView from '@/views/transaction/DistribusiMakananView.vue'
 import UserManagementView from '@/views/master/UserManagementView.vue'
 import RecipeManagementView from '@/views/management/RecipeManagementView.vue'
@@ -83,6 +84,11 @@ const routes = [
         path: 'transactions/stok-opname',
         name: 'StokOpname',
         component: StokOpnameView
+      },
+      {
+        path: 'transactions/penerimaan-barang',
+        name: 'PenerimaanBarang',
+        component: PenerimaanBarangView
       },
       {
         path: 'transactions/distribusi-makanan',

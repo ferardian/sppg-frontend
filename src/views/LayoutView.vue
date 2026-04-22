@@ -108,6 +108,12 @@
         </li>
 
         <li class="nav-item">
+          <router-link to="/transactions/penerimaan-barang" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Penerimaan Barang' : ''">
+            <i class="bi bi-truck me-2"></i>
+             <span v-show="!isEffectivelyCollapsed">Penerimaan Barang</span>
+          </router-link>
+        </li>
+        <li class="nav-item">
           <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" :title="isEffectivelyCollapsed ? 'Stok Opname' : ''">
             <i class="bi bi-clipboard-check me-2"></i>
              <span v-show="!isEffectivelyCollapsed">Stok Opname</span>
@@ -337,6 +343,12 @@
             </h6>
           </li>
           <li class="nav-item">
+            <router-link to="/transactions/penerimaan-barang" class="nav-link" active-class="active" @click="closeMobileMenu">
+              <i class="bi bi-truck me-2"></i>
+              Penerimaan Barang
+            </router-link>
+          </li>
+          <li class="nav-item">
             <router-link to="/transactions/stok-opname" class="nav-link" active-class="active" @click="closeMobileMenu">
               <i class="bi bi-clipboard-check me-2"></i>
               Stok Opname
@@ -437,6 +449,7 @@ export default {
       {
         section: 'Transaksi',
         items: [
+          { to: '/transactions/penerimaan-barang', icon: 'bi-truck', label: 'Penerimaan Barang' },
           { to: '/transactions/stok-opname', icon: 'bi-clipboard-check', label: 'Stok Opname' },
           { to: '/tools/shopping-list', icon: 'bi-cart-check', label: 'Rencana Menu' },
           { to: '/tools/rab', icon: 'bi-wallet2', label: 'Rencana Anggaran' },
@@ -496,6 +509,7 @@ export default {
         'PenerimaManfaat': 'Penerima Manfaat',
         'Supplier': 'Data Supplier',
         'UserManagement': 'Manajemen User',
+        'PenerimaanBarang': 'Penerimaan Barang',
         'StokOpname': 'Stok Opname',
         'DistribusiMakanan': 'Distribusi Makanan',
         'KomposisiPangan': 'Komposisi Pangan',

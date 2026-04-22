@@ -462,7 +462,7 @@ export default {
         menuData.value = response.data || response.data?.data || response || []
         console.log('Menu data fetched:', menuData.value)
       } catch (err) {
-        error.value = 'Gagal memuat data menu: ' + (err.response?.data?.message || err.message)
+        error.value = 'Gagal memuat data menu: ' + (err.message || 'Terjadi kesalahan sistem')
         console.error('Error fetching menu data:', err)
       } finally {
         loading.value = false
@@ -522,14 +522,16 @@ export default {
         await fetchMenuData()
       } catch (err) {
         console.error('Error saving menu:', err)
-        if (err.response?.data?.errors) {
-          console.error('Validation errors:', err.response.data.errors)
-          const errorMessages = Object.values(err.response.data.errors).flat()
+        
+        // Handle validation errors from Laravel (err is already error.response.data due to interceptor)
+        if (err.errors) {
+          console.error('Validation errors:', err.errors)
+          const errorMessages = Object.values(err.errors).flat()
           toast.error('Validasi gagal: ' + errorMessages.join(', '), {
-            timeout: 5000
+            timeout: 7000
           })
         } else {
-          toast.error('Gagal menyimpan data menu: ' + (err.response?.data?.message || err.message), {
+          toast.error('Gagal menyimpan data menu: ' + (err.message || 'Terjadi kesalahan sistem'), {
             timeout: 5000
           })
         }
@@ -572,7 +574,7 @@ export default {
         console.log('Form after edit:', form.value)
       } catch (err) {
         console.error('Error fetching menu details:', err)
-        toast.error('Gagal memuat detail menu: ' + (err.response?.data?.message || err.message))
+        toast.error('Gagal memuat detail menu: ' + (err.message || 'Terjadi kesalahan sistem'))
       } finally {
         loading.value = false
       }
@@ -621,7 +623,7 @@ export default {
           console.log('Menu deleted with id:', id)
         } catch (err) {
           console.error('Error deleting menu:', err)
-          toast.error('Gagal menghapus menu: ' + (err.response?.data?.message || err.message))
+          toast.error('Gagal menghapus menu: ' + (err.message || 'Terjadi kesalahan sistem'))
         } finally {
           loading.value = false
         }

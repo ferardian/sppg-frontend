@@ -5,9 +5,9 @@
       <div>
         <h4 class="mb-1">
           <i class="bi bi-clipboard-check text-primary me-2"></i>
-          Stok Opname
+          Stok Opname & Audit
         </h4>
-        <p class="text-muted mb-0 small">Pencatatan dan pengelolaan stok bahan baku</p>
+        <p class="text-muted mb-0 small">Audit stok, pencatatan barang keluar, dan penyesuaian saldo</p>
       </div>
       <button
         class="btn btn-primary btn-lg rounded-pill px-4"
@@ -16,7 +16,7 @@
         v-if="!showAddForm"
       >
         <i class="bi bi-plus-circle me-2"></i>
-        Catat Stok
+        Audit / Barang Keluar
       </button>
     </div>
 
@@ -40,8 +40,7 @@
           </div>
           <div class="col-md-3">
             <select v-model="jenisFilter" class="form-select">
-              <option value="">Semua Jenis</option>
-              <option value="masuk">Stok Masuk</option>
+              <option value="">Semua Jenis (Audit & Keluar)</option>
               <option value="keluar">Stok Keluar</option>
               <option value="penyesuaian">Penyesuaian</option>
             </select>
@@ -75,7 +74,7 @@
           <p class="text-muted">Catat stok pertama untuk memulai</p>
           <button class="btn btn-primary rounded-pill px-4" @click="showAddForm = true">
             <i class="bi bi-plus-circle me-2"></i>
-            Catat Stok
+            Catat Mutasi Stok
           </button>
         </div>
 
@@ -165,7 +164,7 @@
         <div class="d-flex justify-content-between align-items-center">
           <h5 class="mb-0">
             <i class="bi bi-clipboard-plus me-2"></i>
-            Catat Stok Opname
+            Audit / Penyesuaian Stok
           </h5>
           <button class="btn btn-light btn-sm" @click="cancelAdd">
             <i class="bi bi-x-lg me-1"></i>
@@ -200,9 +199,8 @@
               <label class="form-label">Jenis Transaksi *</label>
               <select v-model="form.jenis_transaksi" class="form-select" required>
                 <option value="">Pilih Jenis</option>
-                <option value="masuk">Stok Masuk</option>
                 <option value="keluar">Stok Keluar</option>
-                <option value="penyesuaian">Penyesuaian Stok</option>
+                <option value="penyesuaian">Penyesuaian Stok (Audit)</option>
               </select>
             </div>
             <div class="col-md-3 mb-3">
@@ -450,6 +448,9 @@ const filteredStokOpname = computed(() => {
       (stok.bahan_baku?.nama_bahan_baku || '').toLowerCase().includes(query)
     )
   }
+
+  // Filter out 'masuk' transactions as they are now in Penerimaan Barang
+  filtered = filtered.filter(stok => stok.jenis_transaksi !== 'masuk')
 
   if (jenisFilter.value) {
     filtered = filtered.filter(stok => stok.jenis_transaksi === jenisFilter.value)
