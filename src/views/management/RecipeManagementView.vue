@@ -117,53 +117,45 @@
     <!-- Quick Stats Cards -->
     <div class="row g-3 mb-4" v-if="showRecipeManagement">
       <div class="col-md-3">
-        <div class="card bg-primary text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <h6 class="card-title mb-0">Total Menu</h6>
-                <h3 class="mb-0">{{ stats.totalMenus }}</h3>
-              </div>
-              <i class="bi bi-journal-text display-6 opacity-25"></i>
+        <div class="card shadow-sm border-0 h-100 overflow-hidden">
+          <div class="card-body position-relative">
+            <div class="position-absolute top-0 start-0 h-100 bg-primary" style="width: 4px;"></div>
+            <div class="ps-2">
+              <h6 class="text-muted small text-uppercase fw-bold mb-2">Total Menu</h6>
+              <h3 class="mb-0 fw-bold text-dark">{{ stats.totalMenus }}</h3>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card bg-success text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <h6 class="card-title mb-0">Menu dengan Resep</h6>
-                <h3 class="mb-0">{{ stats.menusWithRecipes }}</h3>
-              </div>
-              <i class="bi bi-check-circle display-6 opacity-25"></i>
+        <div class="card shadow-sm border-0 h-100 overflow-hidden">
+          <div class="card-body position-relative">
+            <div class="position-absolute top-0 start-0 h-100 bg-success" style="width: 4px;"></div>
+            <div class="ps-2">
+              <h6 class="text-muted small text-uppercase fw-bold mb-2">Menu dengan Resep</h6>
+              <h3 class="mb-0 fw-bold text-dark">{{ stats.menusWithRecipes }}</h3>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card bg-warning text-dark">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <h6 class="card-title mb-0">Total Resep Item</h6>
-                <h3 class="mb-0">{{ stats.totalRecipeItems }}</h3>
-              </div>
-              <i class="bi bi-list-ul display-6 opacity-25"></i>
+        <div class="card shadow-sm border-0 h-100 overflow-hidden">
+          <div class="card-body position-relative">
+            <div class="position-absolute top-0 start-0 h-100 bg-warning" style="width: 4px;"></div>
+            <div class="ps-2">
+              <h6 class="text-muted small text-uppercase fw-bold mb-2">Total Resep Item</h6>
+              <h3 class="mb-0 fw-bold text-dark">{{ stats.totalRecipeItems }}</h3>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card bg-info text-white">
-          <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <h6 class="card-title mb-0">Bahan Unik</h6>
-                <h3 class="mb-0">{{ stats.uniqueIngredients }}</h3>
-              </div>
-              <i class="bi bi-box display-6 opacity-25"></i>
+        <div class="card shadow-sm border-0 h-100 overflow-hidden">
+          <div class="card-body position-relative">
+            <div class="position-absolute top-0 start-0 h-100 bg-info" style="width: 4px;"></div>
+            <div class="ps-2">
+              <h6 class="text-muted small text-uppercase fw-bold mb-2">Bahan Unik</h6>
+              <h3 class="mb-0 fw-bold text-dark">{{ stats.uniqueIngredients }}</h3>
             </div>
           </div>
         </div>

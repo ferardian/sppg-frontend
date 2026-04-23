@@ -10,9 +10,8 @@
         <p class="text-muted mb-0 mt-1">Kelola data Satuan Pemberdayaan Pangan dan Gizi</p>
       </div>
       <button
-        v-if="!hasSPPGData"
+        v-if="!hasSPPGData && !showAddForm"
         class="btn btn-primary btn-lg rounded-pill px-4"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
         @click="showAddForm = true"
       >
         <i class="bi bi-plus-circle me-2"></i>
@@ -54,12 +53,21 @@
     </div>
 
     <!-- Form tambah SPPG -->
-    <div v-if="showAddForm" class="card mb-4 shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
-        <h5 class="mb-0">
-          <i class="bi bi-plus-circle me-2"></i>
+    <div v-if="showAddForm" class="card mb-4 shadow-sm border-0" ref="sppgFormCard">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary">
+          <i class="bi bi-building me-2"></i>
           {{ editingId ? 'Edit Data SPPG' : 'Tambah Data SPPG' }}
         </h5>
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary btn-sm rounded-circle" 
+          @click="cancelAdd"
+          title="Tutup Form"
+          style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
       <div class="card-body">
         <form @submit.prevent="saveSPPG">
@@ -77,6 +85,7 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Nama SPPG</label>
               <input
+                ref="namaSppgInput"
                 v-model="form.nama_sppg"
                 type="text"
                 class="form-control"
@@ -86,8 +95,8 @@
             </div>
           </div>
           <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Alamat</label>
+            <div class="col-md-12 mb-3">
+              <label class="form-label">Alamat Lengkap</label>
               <textarea
                 v-model="form.alamat"
                 class="form-control"
@@ -96,251 +105,124 @@
                 required
               ></textarea>
             </div>
-            <div class="col-md-6 mb-3">
+          </div>
+          <div class="row">
+            <div class="col-md-4 mb-3">
               <label class="form-label">Provinsi</label>
               <input
                 v-model="form.provinsi"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan provinsi"
+                placeholder="Provinsi"
                 required
               >
             </div>
-          </div>
-          <div class="row">
             <div class="col-md-4 mb-3">
               <label class="form-label">Kabupaten/Kota</label>
               <input
                 v-model="form.kabupaten_kota"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan kabupaten/kota"
+                placeholder="Kabupaten/Kota"
                 required
               >
             </div>
             <div class="col-md-4 mb-3">
-              <label class="form-label">Kode Pos</label>
+              <label class="form-label">Kecamatan</label>
               <input
-                v-model="form.kode_pos"
+                v-model="form.kecamatan"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan kode pos"
-              >
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Telepon</label>
-              <input
-                v-model="form.telepon"
-                type="tel"
-                class="form-control"
-                placeholder="Masukkan nomor telepon"
+                placeholder="Kecamatan"
                 required
               >
             </div>
           </div>
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Email</label>
+              <label class="form-label">Desa/Kelurahan</label>
               <input
-                v-model="form.email"
-                type="email"
-                class="form-control"
-                placeholder="Masukkan email"
-              >
-            </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Nama PIC</label>
-              <input
-                v-model="form.nama_pic"
+                v-model="form.desa_kelurahan"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan nama PIC"
-              >
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Telepon PIC</label>
-              <input
-                v-model="form.telepon_pic"
-                type="tel"
-                class="form-control"
-                placeholder="Masukkan telepon PIC"
+                placeholder="Desa/Kelurahan"
+                required
               >
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Kapasitas Layanan</label>
-              <input
-                v-model="form.kapasitas_layanan"
-                type="number"
-                class="form-control"
-                placeholder="Masukkan kapasitas layanan"
+              <label class="form-label">Status</label>
+              <select
+                v-model="form.status"
+                class="form-select"
+                required
               >
+                <option value="">Pilih Status</option>
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Nonaktif</option>
+              </select>
             </div>
           </div>
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Tanggal Operasional</label>
-              <input
-                v-model="form.tanggal_operasional"
-                type="date"
-                class="form-control"
-              >
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Latitude</label>
-              <input
-                v-model="form.latitude"
-                type="text"
-                class="form-control"
-                placeholder="Contoh: -6.2088"
-              >
-            </div>
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Longitude</label>
-              <input
-                v-model="form.longitude"
-                type="text"
-                class="form-control"
-                placeholder="Contoh: 106.8456"
-              >
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12 mb-3">
-              <label class="form-label">Visi</label>
-              <textarea
-                v-model="form.visi"
-                class="form-control"
-                rows="2"
-                placeholder="Masukkan visi SPPG"
-              ></textarea>
-            </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12 mb-3">
-              <label class="form-label">Misi</label>
-              <textarea
-                v-model="form.misi"
-                class="form-control"
-                rows="3"
-                placeholder="Masukkan misi SPPG"
-              ></textarea>
-            </div>
-          </div>
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary" @click="cancelAdd" :disabled="loading">
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-light" @click="cancelAdd" :disabled="loading">
               Batal
             </button>
-            <button type="submit" class="btn btn-primary" :disabled="loading">
+            <button type="submit" class="btn btn-primary px-4" :disabled="loading">
               <i v-if="loading" class="bi bi-arrow-repeat me-2 spin"></i>
               <i v-else class="bi bi-check-circle me-2"></i>
-              {{ loading ? 'Menyimpan...' : 'Simpan' }}
+              {{ loading ? 'Menyimpan...' : 'Simpan Data' }}
             </button>
           </div>
         </form>
       </div>
     </div>
 
-    <!-- Tabel data SPPG -->
-    <div v-if="hasSPPGData" class="card shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-building me-2"></i>
-            Data SPPG
-          </h5>
-          <span class="badge bg-white text-primary">
-            {{ sppgData.length }} Data
-          </span>
-        </div>
-      </div>
-      <div class="card-body p-0">
-        <div class="table-responsive">
-          <table class="table table-hover mb-0">
-            <thead class="table-light">
-              <tr>
-                <th class="border-0">
-                  <i class="bi bi-hash me-1"></i>Kode
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-building me-1"></i>Nama SPPG
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-geo-alt me-1"></i>Alamat
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-map me-1"></i>Kabupaten/Kota
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-telephone me-1"></i>Telepon
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-envelope me-1"></i>Email
-                </th>
-                <th class="border-0 text-center" style="width: 120px;">
-                  <i class="bi bi-gear me-1"></i>Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="sppg in sppgData" :key="sppg.id_sppg" class="align-middle">
-                <td>
-                  <span class="fw-bold text-danger px-2 py-1" style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 4px;">
-                    {{ sppg.kode_sppg }}
-                  </span>
-                </td>
-                <td>
-                  <div class="fw-semibold text-dark">{{ sppg.nama_sppg }}</div>
-                  <small class="text-muted">{{ sppg.provinsi }}</small>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-geo-alt-fill text-danger me-2"></i>
-                    <span>{{ sppg.alamat }}</span>
+    <!-- Data cards (List SPPG) -->
+    <div v-if="hasSPPGData && !showAddForm" class="row">
+      <div v-for="item in sppgData" :key="item.id_sppg" class="col-md-12">
+        <div class="card border-0 shadow-sm overflow-hidden mb-4 plumpy-card">
+          <div class="card-body p-0">
+            <div class="row g-0">
+              <div class="col-md-1 bg-primary bg-opacity-10 d-flex align-items-center justify-content-center py-4">
+                <i class="bi bi-building text-primary fs-1"></i>
+              </div>
+              <div class="col-md-11 p-4">
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                  <div>
+                    <span class="badge bg-primary bg-opacity-10 text-primary mb-2 px-3">
+                      {{ item.kode_sppg }}
+                    </span>
+                    <h4 class="fw-bold text-dark mb-1">{{ item.nama_sppg }}</h4>
+                    <p class="text-muted mb-0"><i class="bi bi-geo-alt me-1"></i> {{ item.alamat }}</p>
                   </div>
-                </td>
-                <td>
-                  <span class="fw-bold text-primary px-2 py-1" style="background-color: #cfe2ff; border: 1px solid #9ec5fe; border-radius: 4px;">
-                    {{ sppg.kabupaten_kota }}
-                  </span>
-                </td>
-                <td>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-telephone-fill text-success me-2"></i>
-                    <span>{{ sppg.telepon }}</span>
-                  </div>
-                </td>
-                <td>
-                  <div v-if="sppg.email" class="d-flex align-items-center">
-                    <i class="bi bi-envelope-fill text-primary me-2"></i>
-                    <a :href="`mailto:${sppg.email}`" class="text-primary text-decoration-none">
-                      {{ sppg.email }}
-                    </a>
-                  </div>
-                  <span v-else class="text-muted">-</span>
-                </td>
-                <td>
-                  <div class="d-flex justify-content-center gap-1">
-                    <button
-                      class="btn btn-sm btn-outline-primary rounded-circle"
-                      @click="editSPPG(sppg)"
-                      :title="'Edit ' + sppg.nama_sppg"
-                    >
-                      <i class="bi bi-pencil"></i>
+                  <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary btn-sm rounded-pill px-3" @click="editSPPG(item)">
+                      <i class="bi bi-pencil me-1"></i> Edit
                     </button>
-                    <button
-                      class="btn btn-sm btn-outline-danger rounded-circle"
-                      @click="deleteSPPG(sppg.id_sppg)"
-                      :title="'Hapus ' + sppg.nama_sppg"
-                    >
-                      <i class="bi bi-trash"></i>
+                    <button class="btn btn-outline-danger btn-sm rounded-pill px-3" @click="deleteSPPG(item.id_sppg)">
+                      <i class="bi bi-trash me-1"></i> Hapus
                     </button>
                   </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+                </div>
+                <hr class="my-3 opacity-10">
+                <div class="row g-3">
+                  <div class="col-md-3">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">Wilayah</div>
+                    <div class="fw-semibold">{{ item.kecamatan }}, {{ item.kabupaten_kota }}</div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">Provinsi</div>
+                    <div class="fw-semibold">{{ item.provinsi }}</div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="small text-muted text-uppercase fw-bold mb-1">Status</div>
+                    <span class="badge rounded-pill px-3" :class="item.status === 'aktif' ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'">
+                      {{ item.status === 'aktif' ? 'Aktif' : 'Nonaktif' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -348,17 +230,25 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import sppgService from '@/services/sppgService'
+import { useToast } from 'vue-toastification'
+import Swal from 'sweetalert2'
 
 export default {
   name: 'SPPGView',
   setup() {
+    const toast = useToast()
+    
     // State management
     const showAddForm = ref(false)
     const sppgData = ref([])
     const loading = ref(false)
     const error = ref('')
+    
+    // Refs for UI
+    const sppgFormCard = ref(null)
+    const namaSppgInput = ref(null)
 
     // Form data
     const form = ref({
@@ -368,39 +258,24 @@ export default {
       provinsi: '',
       kabupaten_kota: '',
       kecamatan: '',
-      kelurahan: '',
-      kode_pos: '',
-      telepon: '',
-      email: '',
-      nama_pic: '',
-      telepon_pic: '',
-      kapasitas_layanan: '',
-      tanggal_operasional: '',
-      latitude: '',
-      longitude: '',
-      visi: '',
-      misi: ''
+      desa_kelurahan: '',
+      status: ''
     })
 
     const editingId = ref(null)
 
     // Computed properties
-    const hasSPPGData = computed(() => {
-      return sppgData.value.length > 0
-    })
+    const hasSPPGData = computed(() => sppgData.value.length > 0)
 
-      // Methods
+    // Methods
     const fetchSPPGData = async () => {
       try {
         loading.value = true
         error.value = ''
         const response = await sppgService.getAll()
-        // Handle different response structures
-        sppgData.value = response.data || response.data?.data || response || []
-        console.log('SPPG data fetched:', sppgData.value)
+        sppgData.value = response.data || response || []
       } catch (err) {
-        error.value = 'Gagal memuat data SPPG: ' + (err.response?.data?.message || err.message)
-        console.error('Error fetching SPPG data:', err)
+        error.value = 'Gagal memuat data SPPG: ' + (err.message || 'Terjadi kesalahan sistem')
       } finally {
         loading.value = false
       }
@@ -409,56 +284,52 @@ export default {
     const saveSPPG = async () => {
       try {
         loading.value = true
-
-        // Validasi maksimal 1 data SPPG
-        if (!editingId.value && sppgData.value.length >= 1) {
-          alert('Sistem hanya memperbolehkan maksimal 1 data SPPG. Silakan hapus data yang ada terlebih dahulu.')
-          return
-        }
-
-        let response
         if (editingId.value) {
-          response = await sppgService.update(editingId.value, form.value)
-          const index = sppgData.value.findIndex(sppg => sppg.id_sppg === editingId.value)
-          if (index !== -1) {
-            sppgData.value[index] = response.data || response
-          }
+          await sppgService.update(editingId.value, form.value)
+          toast.success('Data SPPG berhasil diperbarui!')
         } else {
-          response = await sppgService.create(form.value)
-          sppgData.value.push(response.data || response)
+          await sppgService.create(form.value)
+          toast.success('Data SPPG berhasil ditambahkan!')
         }
-
-        // Reset form
         resetForm()
         showAddForm.value = false
-
-        console.log('SPPG saved:', response)
+        await fetchSPPGData()
       } catch (err) {
-        console.error('Error saving SPPG:', err)
-        alert('Gagal menyimpan data SPPG')
+        toast.error('Gagal menyimpan data SPPG: ' + (err.message || 'Terjadi kesalahan sistem'))
       } finally {
         loading.value = false
       }
     }
 
-    const editSPPG = (sppg) => {
-      // Isi form dengan data yang akan diedit
-      form.value = { ...sppg }
-      editingId.value = sppg.id_sppg
+    const editSPPG = (item) => {
+      form.value = { ...item }
+      editingId.value = item.id_sppg
       showAddForm.value = true
-      console.log('Edit SPPG:', sppg)
+      nextTick(() => {
+        if (sppgFormCard.value) sppgFormCard.value.scrollIntoView({ behavior: 'smooth' })
+        if (namaSppgInput.value) namaSppgInput.value.focus()
+      })
     }
 
     const deleteSPPG = async (id) => {
-      if (confirm('Apakah Anda yakin ingin menghapus data SPPG ini?')) {
+      const result = await Swal.fire({
+        title: 'Hapus Data SPPG?',
+        text: 'Tindakan ini tidak dapat dibatalkan!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#dc3545',
+        confirmButtonText: 'Ya, Hapus!',
+        cancelButtonText: 'Batal'
+      })
+
+      if (result.isConfirmed) {
         try {
           loading.value = true
           await sppgService.delete(id)
-          sppgData.value = sppgData.value.filter(sppg => sppg.id_sppg !== id)
-          console.log('SPPG deleted with id:', id)
+          toast.success('Data SPPG berhasil dihapus')
+          await fetchSPPGData()
         } catch (err) {
-          console.error('Error deleting SPPG:', err)
-          alert('Gagal menghapus data SPPG')
+          toast.error('Gagal menghapus data: ' + (err.message || 'Terjadi kesalahan sistem'))
         } finally {
           loading.value = false
         }
@@ -479,259 +350,33 @@ export default {
         provinsi: '',
         kabupaten_kota: '',
         kecamatan: '',
-        kelurahan: '',
-        kode_pos: '',
-        telepon: '',
-        email: '',
-        nama_pic: '',
-        telepon_pic: '',
-        kapasitas_layanan: '',
-        tanggal_operasional: '',
-        latitude: '',
-        longitude: '',
-        visi: '',
-        misi: ''
+        desa_kelurahan: '',
+        status: ''
       }
     }
 
-      // Lifecycle
-    onMounted(() => {
-      console.log('🔴 SPPGView component mounted successfully!')
-      fetchSPPGData()
-    })
+    onMounted(fetchSPPGData)
 
     return {
-      // State
-      showAddForm,
-      sppgData,
-      form,
-      loading,
-      error,
-
-      // Computed
-      hasSPPGData,
-
-      // Methods
-      fetchSPPGData,
-      saveSPPG,
-      editSPPG,
-      deleteSPPG,
-      cancelAdd,
-      resetForm
+      showAddForm, sppgData, loading, error, hasSPPGData, form, editingId,
+      fetchSPPGData, saveSPPG, editSPPG, deleteSPPG, cancelAdd, resetForm,
+      sppgFormCard, namaSppgInput
     }
   }
 }
 </script>
 
 <style scoped>
-/* Custom styles untuk SPPG view */
+.spin { animation: fa-spin 2s infinite linear; }
+@keyframes fa-spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(359deg); } }
 
-/* Gradient backgrounds */
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+.plumpy-card {
+    border-radius: 1.25rem !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-/* Table styling */
-.table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  border-top: none;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.table td {
-  vertical-align: middle;
-  border-color: #f1f3f5;
-}
-
-.table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-/* Badge improvements */
-.badge {
-  font-size: 0.75rem;
-  padding: 0.5em 0.75em;
-  font-weight: 500;
-}
-
-.bg-opacity-10 {
-  opacity: 0.15 !important;
-}
-
-/* Specific badge styling */
-.badge.bg-primary.bg-opacity-10 {
-  background-color: #dc3545 !important;
-  color: #ffffff !important;
-  font-weight: 700;
-  border: 1px solid #dc3545 !important;
-}
-
-.badge.bg-info.bg-opacity-10 {
-  background-color: #0d6efd !important;
-  color: #ffffff !important;
-  font-weight: 700;
-  border: 1px solid #0d6efd !important;
-}
-
-/* Card improvements */
-.card {
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.card:hover {
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-  transform: translateY(-2px);
-}
-
-/* Header styling */
-.text-dark {
-  color: #2c3e50 !important;
-}
-
-/* Button styling */
-.btn {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-outline-primary:hover {
-  background-color: #667eea;
-  border-color: #667eea;
-  transform: scale(1.1);
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  transform: scale(1.1);
-}
-
-.btn-rounded-pill {
-  border-radius: 50px;
-}
-
-/* Form styling */
-.form-control {
-  border-radius: 8px;
-  border: 1px solid #e0e6ed;
-  transition: all 0.3s ease;
-  padding: 0.75rem 1rem;
-}
-
-.form-control:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-  transform: translateY(-1px);
-}
-
-.form-label {
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-}
-
-/* Loading spinner animation */
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Table responsiveness */
-.table-responsive {
-  overflow-x: auto;
-  border-radius: 0 0 12px 12px;
-}
-
-/* Icon styling */
-.bi {
-  font-size: 1rem;
-}
-
-/* Link styling */
-.text-decoration-none:hover {
-  text-decoration: underline !important;
-}
-
-/* Action buttons */
-.btn-sm {
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-/* Loading overlay */
-.loading-overlay {
-  position: relative;
-  opacity: 0.6;
-  pointer-events: none;
-}
-
-/* Card header improvements */
-.card-header {
-  border-bottom: none;
-}
-
-/* Data cell improvements */
-.fw-semibold {
-  font-weight: 600;
-}
-
-/* Empty state improvements */
-.card.border-0 {
-  border: none;
-}
-
-/* Alert improvements */
-.alert {
-  border-radius: 12px;
-  border: none;
-}
-
-/* Responsive improvements */
-@media (max-width: 768px) {
-  .btn-lg {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-  }
-
-  .table th,
-  .table td {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.875rem;
-  }
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: none !important;
-  background-color: transparent !important;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+.plumpy-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08) !important;
 }
 </style>

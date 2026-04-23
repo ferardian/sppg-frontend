@@ -24,12 +24,45 @@
           </select>
         </div>
         
-        <!-- Add Button -->
-        <button class="btn btn-primary rounded-pill px-4 flex-grow-1 flex-md-grow-0" @click="showAddModal = true">
-          <i class="bi bi-plus-circle me-2"></i>
-          <span class="d-none d-sm-inline">Tambah Transaksi</span>
-          <span class="d-inline d-sm-none">Tambah</span>
-        </button>
+        <!-- Add & Export Buttons -->
+        <div class="d-flex gap-2 flex-grow-1 flex-md-grow-0">
+          <button class="btn btn-primary rounded-pill px-4" @click="showAddModal = true">
+            <i class="bi bi-plus-circle me-2"></i>
+            <span class="d-none d-sm-inline">Tambah Transaksi</span>
+            <span class="d-inline d-sm-none">Tambah</span>
+          </button>
+          
+          <div class="dropdown">
+            <button 
+              class="btn btn-outline-secondary rounded-pill px-3 dropdown-toggle" 
+              type="button" 
+              @click.stop="showExportMenu = !showExportMenu"
+              :class="{ show: showExportMenu }"
+            >
+              <i class="bi bi-download me-1"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end shadow border-0" :class="{ show: showExportMenu }" style="display: block; visibility: visible; transform: translateY(10px); z-index: 9999;" v-if="showExportMenu">
+              <li>
+                <a class="dropdown-item py-2" href="#" @click.prevent="exportToExcel">
+                  <i class="bi bi-file-earmark-excel text-success me-2"></i> Excel (.xlsx)
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item py-2" href="#" @click.prevent="exportToPDF">
+                  <i class="bi bi-file-earmark-pdf text-danger me-2"></i> PDF (Cetak)
+                </a>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li>
+                <a class="dropdown-item py-2" href="#" @click.prevent="exportToZip">
+                  <i class="bi bi-file-earmark-zip text-warning me-2"></i> ZIP Bukti Nota (.zip)
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -82,8 +115,13 @@
                                 
                                 <!-- Description -->
                                 <td>
-                                    <div class="d-flex justify-content-between">
-                                        <span>{{ item.description }}</span>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div class="d-flex align-items-center">
+                                            <span>{{ item.description }}</span>
+                                            <span v-if="item.evidence_path" class="ms-2 text-primary cursor-pointer" @click="previewEvidence(item)" title="Lihat Bukti Nota">
+                                                <i class="bi bi-image"></i>
+                                            </span>
+                                        </div>
                                         <span v-if="item.category" class="badge bg-light text-secondary ms-2">{{ item.category }}</span>
                                     </div>
                                     <div v-if="item.type === 'transfer'" class="small text-muted fst-italic">
@@ -238,21 +276,34 @@
                             </div>
                         </div>
 
-                         <div class="row" v-if="form.mode !== 'transfer'">
-                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Kategori (Opsional)</label>
-                                <input type="text" class="form-control" v-model="form.category" placeholder="Operasional">
+                         <div class="mb-3">
+                            <label class="form-label">Foto Bukti Nota (Opsional)</label>
+                            <input type="file" class="form-control" @change="onFileSelected" accept="image/*,.pdf">
+                            <div v-if="form.id && itemBeingEdited?.evidence_path" class="form-text text-success">
+                                <i class="bi bi-check-circle-fill me-1"></i> Sudah ada bukti nota. Pilih file baru untuk mengganti.
                             </div>
-                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Banyak (Qty)</label>
-                                <input type="number" class="form-control" v-model="form.quantity" min="1" placeholder="1">
-                            </div>
-                        </div>
+                         </div>
 
-                        <button type="submit" class="btn btn-primary w-100" :disabled="loading">
-                            Simpan Transaksi
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-bold" :disabled="loading">
+                            <i class="bi bi-save me-2"></i>
+                            {{ form.id ? 'Perbarui' : 'Simpan' }} Transaksi
                         </button>
                     </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Evidence Preview Modal -->
+    <div v-if="previewUrl" class="modal-backdrop fade show" @click="previewUrl = null"></div>
+    <div v-if="previewUrl" class="modal fade show d-block" tabindex="-1" @click="previewUrl = null">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 bg-transparent shadow-none" @click.stop>
+                <div class="modal-header border-0 p-0 mb-2">
+                    <button type="button" class="btn-close btn-close-white ms-auto" @click="previewUrl = null"></button>
+                </div>
+                <div class="modal-body p-0 text-center">
+                    <img :src="previewUrl" class="img-fluid rounded shadow-lg" style="max-height: 85vh;" alt="Evidence Preview">
                 </div>
             </div>
         </div>
@@ -263,7 +314,11 @@
 <script>
 import { ref, onMounted, computed } from 'vue'
 import financeService from '@/services/financeService'
+import apiClient from '@/services/api'
 import { useToast } from 'vue-toastification'
+import * as XLSX from 'xlsx'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
 export default {
   name: 'FinanceView',
@@ -273,6 +328,7 @@ export default {
     const accounts = ref([])
     const groupedTransactions = ref({})
     const showAddModal = ref(false)
+    const showExportMenu = ref(false)
     
     // Filters
     const selectedMonth = ref(new Date().getMonth() + 1)
@@ -290,8 +346,97 @@ export default {
         from_account_id: '',
         to_account_id: '',
         category: '',
-        quantity: ''
+        quantity: '',
+        evidence_file: null
     })
+
+    const itemBeingEdited = ref(null)
+    const previewUrl = ref(null)
+
+    const onFileSelected = async (event) => {
+        const file = event.target.files[0]
+        if (!file) return
+
+        // If it's not an image (e.g. PDF), don't compress
+        if (!file.type.startsWith('image/')) {
+            form.value.evidence_file = file
+            return
+        }
+
+        // Compress image
+        try {
+            loading.value = true
+            const compressedFile = await compressImage(file)
+            form.value.evidence_file = compressedFile
+        } catch (e) {
+            console.error('Compression failed:', e)
+            form.value.evidence_file = file // Fallback to original
+        } finally {
+            loading.value = false
+        }
+    }
+
+    const compressImage = (file) => {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.readAsDataURL(file)
+            reader.onload = (e) => {
+                const img = new Image()
+                img.src = e.target.result
+                img.onload = () => {
+                    const canvas = document.createElement('canvas')
+                    let width = img.width
+                    let height = img.height
+
+                    // Max dimensions
+                    const MAX_WIDTH = 1280
+                    const MAX_HEIGHT = 1280
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width
+                            width = MAX_WIDTH
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height
+                            height = MAX_HEIGHT
+                        }
+                    }
+
+                    canvas.width = width
+                    canvas.height = height
+                    const ctx = canvas.getContext('2d')
+                    ctx.drawImage(img, 0, 0, width, height)
+
+                    // Convert to blob with 0.7 quality
+                    canvas.toBlob((blob) => {
+                        const compressedFile = new File([blob], file.name, {
+                            type: 'image/jpeg',
+                            lastModified: Date.now()
+                        })
+                        resolve(compressedFile)
+                    }, 'image/jpeg', 0.7)
+                }
+                img.onerror = reject
+            }
+            reader.onerror = reject
+        })
+    }
+
+    const previewEvidence = (item) => {
+        let baseUrl = apiClient.defaults.baseURL || ''
+        
+        // If relative path, prepend the likely backend host
+        if (baseUrl.startsWith('/')) {
+            const host = import.meta.env.VITE_API_HOST || 'http://localhost:8000'
+            baseUrl = host + baseUrl
+        }
+        
+        baseUrl = baseUrl.replace('/api/v1', '').replace('/api', '')
+        previewUrl.value = `${baseUrl}/storage/${item.evidence_path}`
+        console.log('Previewing evidence at:', previewUrl.value)
+    }
 
     // Computed properties for display
     const displayAmount = computed(() => {
@@ -351,57 +496,44 @@ export default {
     const submitTransaction = async () => {
         loading.value = true
         try {
-            const payload = {
-                date: form.value.date,
-                description: form.value.description,
-                amount: form.value.amount,
-                admin_fee: form.value.admin_fee,
-                category: form.value.category,
-                quantity: form.value.quantity
+            const formData = new FormData()
+            formData.append('date', form.value.date)
+            formData.append('description', form.value.description)
+            formData.append('amount', form.value.amount)
+            formData.append('admin_fee', form.value.admin_fee || 0)
+            formData.append('category', form.value.category || '')
+            formData.append('quantity', form.value.quantity || '')
+            
+            if (form.value.evidence_file) {
+                formData.append('evidence', form.value.evidence_file)
             }
 
             if (form.value.mode === 'transfer') {
-                 Object.assign(payload, {
-                    type: 'transfer',
-                    from_account_id: form.value.from_account_id,
-                    to_account_id: form.value.to_account_id
-                 })
-                 // Rename for API consistency if needed, but the API expects slightly diff structure for transfer helper
-                 // Actually, update uses generic structure, createTransfer uses specific. 
-                 // Let's align: Update uses general update endpoint. Create uses specific.
+                formData.append('type', 'transfer')
+                formData.append('from_account_id', form.value.from_account_id)
+                formData.append('to_account_id', form.value.to_account_id)
             } else {
-                 Object.assign(payload, {
-                    type: form.value.mode, // 'in' or 'out'
-                    account_id: form.value.account_id
-                 })
+                formData.append('type', form.value.mode)
+                formData.append('account_id', form.value.account_id)
             }
 
             if (form.value.id) {
-                // UPDATE MODE
-                // For update, we map fields to what the API expects
-                const updatePayload = {
-                    ...payload,
-                    account_id: form.value.mode === 'transfer' ? form.value.from_account_id : form.value.account_id,
-                    related_account_id: form.value.mode === 'transfer' ? form.value.to_account_id : null
+                // UPDATE MODE - Laravel spoofing
+                formData.append('_method', 'PUT')
+                if (form.value.mode === 'transfer') {
+                    formData.append('account_id', form.value.from_account_id)
+                    formData.append('related_account_id', form.value.to_account_id)
                 }
-                
-                await financeService.updateTransaction(form.value.id, updatePayload)
+
+                await financeService.updateTransaction(form.value.id, formData)
                 toast.success("Transaksi berhasil diperbarui")
 
             } else {
                 // CREATE MODE
                 if (form.value.mode === 'transfer') {
-                    await financeService.createTransfer({
-                        ...payload,
-                        from_account_id: form.value.from_account_id,
-                        to_account_id: form.value.to_account_id
-                    })
+                    await financeService.createTransfer(formData)
                 } else {
-                    await financeService.createTransaction({
-                        ...payload,
-                        type: form.value.mode,
-                        account_id: form.value.account_id
-                    })
+                    await financeService.createTransaction(formData)
                 }
                 toast.success("Transaksi berhasil disimpan")
             }
@@ -418,6 +550,7 @@ export default {
     }
 
     const editTransaction = (item) => {
+        itemBeingEdited.value = item
         form.value = {
             id: item.id,
             mode: item.type, // 'in', 'out', 'transfer'
@@ -430,7 +563,8 @@ export default {
             // Account mapping
             account_id: item.account_id,
             from_account_id: item.type === 'transfer' ? item.account_id : '',
-            to_account_id: item.type === 'transfer' ? item.related_account_id : ''
+            to_account_id: item.type === 'transfer' ? item.related_account_id : '',
+            evidence_file: null
         }
         showAddModal.value = true
     }
@@ -459,9 +593,13 @@ export default {
             amount: '',
             admin_fee: 0,
             account_id: accounts.value[0]?.id || '',
+            from_account_id: '',
+            to_account_id: '',
             category: '',
-            quantity: ''
+            quantity: '',
+            evidence_file: null
         }
+        itemBeingEdited.value = null
     }
 
     // formatting helpers
@@ -511,6 +649,186 @@ export default {
         return formatCurrency(parseFloat(item.amount) + parseFloat(item.admin_fee || 0))
     }
 
+    const exportToExcel = () => {
+        try {
+            const data = []
+            // Header
+            const headers = ['Tanggal', 'Keterangan', 'Banyak']
+            accounts.value.forEach(acc => {
+                headers.push(`${acc.name} - Harga`)
+                if (acc.name === 'LIVIN') {
+                    headers.push(`${acc.name} - Admin`)
+                    headers.push(`${acc.name} - Total`)
+                }
+            })
+            data.push(headers)
+
+            // Data rows
+            Object.entries(groupedTransactions.value).forEach(([date, transactions]) => {
+                transactions.forEach(item => {
+                    const row = [date, item.description, item.quantity || '-']
+                    
+                    accounts.value.forEach(acc => {
+                        const isRelated = item.account_id === acc.id || item.related_account_id === acc.id
+                        if (isRelated) {
+                            row.push(item.amount)
+                            if (acc.name === 'LIVIN') {
+                                row.push(item.admin_fee || 0)
+                                row.push(parseFloat(item.amount) + parseFloat(item.admin_fee || 0))
+                            }
+                        } else {
+                            row.push('')
+                            if (acc.name === 'LIVIN') {
+                                row.push('')
+                                row.push('')
+                            }
+                        }
+                    })
+                    data.push(row)
+                })
+            })
+
+            const ws = XLSX.utils.aoa_to_sheet(data)
+            const wb = XLSX.utils.book_new()
+            XLSX.utils.book_append_sheet(wb, ws, "Buku Kas")
+            XLSX.writeFile(wb, `Buku_Kas_${selectedMonth.value}_${selectedYear.value}.xlsx`)
+            toast.success("Excel berhasil diunduh")
+        } catch (e) {
+            console.error(e)
+            toast.error("Gagal export Excel")
+        }
+    }
+
+    const exportToPDF = () => {
+        try {
+            const doc = new jsPDF({
+                orientation: 'landscape',
+                unit: 'mm',
+                format: 'a4'
+            })
+
+            // Title & Header
+            doc.setFontSize(18)
+            doc.setTextColor(40)
+            doc.text("LAPORAN BUKU KAS & KEUANGAN", 14, 15)
+            
+            doc.setFontSize(11)
+            doc.setTextColor(100)
+            doc.text(`Periode: ${getMonthName(selectedMonth.value)} ${selectedYear.value}`, 14, 22)
+            doc.text(`Dicetak pada: ${new Date().toLocaleString('id-ID')}`, 14, 27)
+
+            // Accounts Summary Section
+            let startY = 35
+            doc.setFontSize(10)
+            doc.setTextColor(0)
+            doc.text("RINGKASAN SALDO AKUN:", 14, startY)
+            
+            accounts.value.forEach((acc, i) => {
+                doc.text(`${acc.name}: ${formatCurrency(acc.current_balance)}`, 14 + (i * 60), startY + 7)
+            })
+
+            // Table Data Preparation
+            const head = []
+            const firstHeaderRow = [
+                { content: 'TANGGAL', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+                { content: 'KETERANGAN', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+                { content: 'QTY', rowSpan: 2, styles: { halign: 'center', valign: 'middle' } },
+            ]
+            
+            const secondHeaderRow = []
+
+            accounts.value.forEach(acc => {
+                const colSpan = acc.name === 'LIVIN' ? 3 : 1
+                firstHeaderRow.push({ 
+                    content: acc.name, 
+                    colSpan: colSpan, 
+                    styles: { halign: 'center' } 
+                })
+                
+                if (acc.name === 'LIVIN') {
+                    secondHeaderRow.push({ content: 'HARGA', styles: { halign: 'center' } })
+                    secondHeaderRow.push({ content: 'ADMIN', styles: { halign: 'center' } })
+                    secondHeaderRow.push({ content: 'TOTAL', styles: { halign: 'center' } })
+                } else {
+                    secondHeaderRow.push({ content: 'HARGA', styles: { halign: 'center' } })
+                }
+            })
+            
+            head.push(firstHeaderRow)
+            head.push(secondHeaderRow)
+
+            const body = []
+            Object.entries(groupedTransactions.value).forEach(([date, transactions]) => {
+                transactions.forEach((item, idx) => {
+                    const row = []
+                    row.push(idx === 0 ? formatDate(date) : '')
+                    row.push(item.description)
+                    row.push(item.quantity || '-')
+                    
+                    accounts.value.forEach(acc => {
+                        const isPrimary = item.account_id === acc.id
+                        const isRelated = item.related_account_id === acc.id
+                        
+                        if (isPrimary || isRelated) {
+                            row.push(formatCurrency(item.amount).replace('Rp', '').trim())
+                            if (acc.name === 'LIVIN') {
+                                row.push(isPrimary ? formatCurrency(item.admin_fee || 0).replace('Rp', '').trim() : '')
+                                row.push(isPrimary ? formatCurrency(parseFloat(item.amount) + parseFloat(item.admin_fee || 0)).replace('Rp', '').trim() : '')
+                            }
+                        } else {
+                            row.push('')
+                            if (acc.name === 'LIVIN') {
+                                row.push('')
+                                row.push('')
+                            }
+                        }
+                    })
+                    body.push(row)
+                })
+            })
+
+            // Generate Table
+            autoTable(doc, {
+                head: head,
+                body: body,
+                startY: startY + 15,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [41, 128, 185], textColor: 255 },
+                alternateRowStyles: { fillColor: [245, 245, 245] },
+                margin: { top: 30 },
+                didDrawPage: (data) => {
+                    // Footer
+                    const str = "Halaman " + doc.internal.getNumberOfPages()
+                    doc.setFontSize(8)
+                    doc.text(str, data.settings.margin.left, doc.internal.pageSize.height - 10)
+                }
+            })
+
+            doc.save(`Laporan_Buku_Kas_${selectedMonth.value}_${selectedYear.value}.pdf`)
+            toast.success("PDF berhasil diunduh")
+        } catch (e) {
+            console.error(e)
+            toast.error("Gagal export PDF")
+        }
+    }
+
+    const exportToZip = async () => {
+        try {
+            loading.value = true
+            await financeService.exportEvidence({
+                month: selectedMonth.value,
+                year: selectedYear.value
+            })
+            toast.success("ZIP bukti nota berhasil diunduh")
+        } catch (e) {
+            console.error(e)
+            toast.error(e.message || "Gagal mengunduh ZIP bukti nota")
+        } finally {
+            loading.value = false
+        }
+    }
+
     onMounted(() => {
         fetchAccounts().then(() => fetchData())
     })
@@ -535,7 +853,15 @@ export default {
         deleteTransaction,
         displayAmount,
         displayAdminFee,
-        updateCurrencyValue
+        updateCurrencyValue,
+        onFileSelected,
+        previewEvidence,
+        previewUrl,
+        itemBeingEdited,
+        exportToExcel,
+        exportToPDF,
+        exportToZip,
+        showExportMenu
     }
   }
 }
@@ -560,5 +886,42 @@ export default {
 .modal-backdrop {
     opacity: 0.5;
     background-color: #000;
+}
+.cursor-pointer {
+    cursor: pointer;
+}
+.cursor-pointer:hover {
+    color: var(--primary-dark) !important;
+}
+
+@media print {
+    .btn, .dropdown, .nav-pills, .mb-4 p, .mb-4 h3 i {
+        display: none !important;
+    }
+    .finance-view {
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    .card {
+        box-shadow: none !important;
+        border: none !important;
+    }
+    .spreadsheet-table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+        font-size: 8pt !important;
+    }
+    .spreadsheet-table th, .spreadsheet-table td {
+        border: 1px solid #000 !important;
+        padding: 4px !important;
+    }
+    .spreadsheet-table th {
+        background-color: #f0f0f0 !important;
+        -webkit-print-color-adjust: exact;
+    }
+    @page {
+        size: landscape;
+        margin: 0.5cm;
+    }
 }
 </style>

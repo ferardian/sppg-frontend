@@ -1,31 +1,29 @@
 <template>
-  <div class="container-fluid">
-    <!-- Header Section -->
+  <div>
+    <!-- Header dengan tombol tambah -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h4 class="mb-1">
+        <h3 class="mb-0 text-dark">
           <i class="bi bi-truck text-primary me-2"></i>
           Master Data Supplier
-        </h4>
-        <p class="text-muted mb-0 small">Kelola data supplier bahan makanan</p>
+        </h3>
+        <p class="text-muted mb-0 mt-1">Kelola data supplier bahan makanan</p>
       </div>
       <button
-        class="btn btn-primary btn-lg rounded-pill px-4"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
-        @click="showAddSupplierForm"
         v-if="!showAddForm"
+        class="btn btn-primary btn-lg rounded-pill px-4"
+        @click="showAddSupplierForm"
       >
         <i class="bi bi-plus-circle me-2"></i>
         Tambah Supplier
       </button>
     </div>
 
-    <!-- Data Table -->
-    <div v-if="!showAddForm" class="card border-0 shadow-sm">
-      <div class="card-body">
-        <!-- Search and Filter -->
-        <div class="row mb-3">
-          <div class="col-md-6">
+    <!-- Search and Filter -->
+    <div v-if="!showAddForm" class="card mb-4 shadow-sm border-0">
+      <div class="card-body p-3">
+        <div class="row align-items-center">
+          <div class="col-md-5">
             <div class="input-group">
               <span class="input-group-text bg-white border-end-0">
                 <i class="bi bi-search text-muted"></i>
@@ -33,192 +31,85 @@
               <input
                 v-model="searchQuery"
                 type="text"
-                class="form-control border-start-0"
-                placeholder="Cari nama supplier..."
+                class="form-control border-start-0 ps-0"
+                placeholder="Cari nama atau kode supplier..."
               >
             </div>
           </div>
           <div class="col-md-3">
-            <select v-model="statusFilter" class="form-select">
+            <select v-model="statusFilter" class="form-select border-0 bg-light">
               <option value="">Semua Status</option>
               <option value="aktif">Aktif</option>
               <option value="nonaktif">Nonaktif</option>
               <option value="blacklist">Blacklist</option>
             </select>
           </div>
-          <div class="col-md-3 text-end">
-            <small class="text-muted">
-              Total: {{ filteredSuppliers.length }} supplier
-            </small>
+          <div class="col-md-4 text-end">
+            <span class="badge bg-primary bg-opacity-10 text-primary rounded-pill px-3 py-2">
+              Total: {{ filteredSuppliers.length }} Supplier
+            </span>
           </div>
-        </div>
-
-        <!-- Table -->
-        <div v-if="loading" class="text-center py-5">
-          <div class="spinner-border text-primary" role="status">
-            <span class="visually-hidden">Loading...</span>
-          </div>
-          <p class="mt-2 text-muted">Memuat data supplier...</p>
-        </div>
-
-        <div v-else-if="filteredSuppliers.length === 0" class="text-center py-5">
-          <i class="bi bi-truck display-1 text-muted"></i>
-          <h5 class="mt-3 text-muted">Belum ada data supplier</h5>
-          <p class="text-muted">Tambah supplier pertama untuk memulai</p>
-          <button class="btn btn-primary rounded-pill px-4" @click="showAddSupplierForm">
-            <i class="bi bi-plus-circle me-2"></i>
-            Tambah Supplier
-          </button>
-        </div>
-
-        <div v-else class="table-responsive">
-          <table class="table table-hover">
-            <thead class="table-light">
-              <tr>
-                <th>Kode</th>
-                <th>Nama Supplier</th>
-                <th>Informasi Kontak</th>
-                <th>Contact Person</th>
-                <th>Status</th>
-                <th class="text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="supplier in paginatedSuppliers" :key="supplier.id_supplier">
-                <td class="align-middle">
-                  <span class="badge bg-primary">{{ supplier.kode_supplier }}</span>
-                </td>
-                <td class="align-middle">
-                  <div>
-                    <strong>{{ supplier.nama_supplier }}</strong>
-                    <div class="small text-muted">{{ supplier.alamat }}</div>
-                  </div>
-                </td>
-                <td class="align-middle">
-                  <div class="small">
-                    <div v-if="supplier.telepon">
-                      <i class="bi bi-telephone-fill text-muted me-1"></i>
-                      {{ supplier.telepon }}
-                    </div>
-                    <div v-if="supplier.email">
-                      <i class="bi bi-envelope-fill text-muted me-1"></i>
-                      {{ supplier.email }}
-                    </div>
-                  </div>
-                </td>
-                <td class="align-middle">
-                  <div v-if="supplier.nama_cp" class="small">
-                    <strong>{{ supplier.nama_cp }}</strong>
-                    <div v-if="supplier.telepon_cp" class="text-muted">
-                      <i class="bi bi-telephone me-1"></i>
-                      {{ supplier.telepon_cp }}
-                    </div>
-                  </div>
-                  <span v-else class="text-muted">-</span>
-                </td>
-                <td class="align-middle">
-                  <span :class="getStatusBadgeClass(supplier.status)">
-                    {{ supplier.status_display }}
-                  </span>
-                </td>
-                <td class="align-middle">
-                  <div class="d-flex justify-content-center gap-1">
-                    <button
-                      class="btn btn-sm btn-outline-primary rounded-circle"
-                      @click="editSupplier(supplier)"
-                      :title="'Edit ' + supplier.nama_supplier"
-                    >
-                      <i class="bi bi-pencil"></i>
-                    </button>
-                    <button
-                      class="btn btn-sm btn-outline-danger rounded-circle"
-                      @click="deleteSupplier(supplier.id_supplier)"
-                      :title="'Hapus ' + supplier.nama_supplier"
-                    >
-                      <i class="bi bi-trash"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-
-          <!-- Pagination -->
-          <nav v-if="totalPages > 1" class="mt-3">
-            <ul class="pagination pagination-sm justify-content-center mb-0">
-              <li class="page-item" :class="{ disabled: currentPage === 1 }">
-                <a class="page-link" href="#" @click.prevent="currentPage--">Previous</a>
-              </li>
-              <li
-                v-for="page in totalPages"
-                :key="page"
-                class="page-item"
-                :class="{ active: currentPage === page }"
-              >
-                <a class="page-link" href="#" @click.prevent="currentPage = page">{{ page }}</a>
-              </li>
-              <li class="page-item" :class="{ disabled: currentPage === totalPages }">
-                <a class="page-link" href="#" @click.prevent="currentPage++">Next</a>
-              </li>
-            </ul>
-          </nav>
         </div>
       </div>
     </div>
 
     <!-- Form Tambah/Edit -->
-    <div v-if="showAddForm" class="card border-0 shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-plus-circle me-2"></i>
-            {{ editingId ? 'Edit' : 'Tambah' }} Supplier
-          </h5>
-          <button class="btn btn-light btn-sm" @click="cancelAdd">
-            <i class="bi bi-x-lg me-1"></i>
-            Batal
-          </button>
-        </div>
+    <div v-if="showAddForm" class="card mb-4 shadow-sm border-0" ref="supplierFormCard">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary">
+          <i class="bi bi-truck me-2"></i>
+          {{ editingId ? 'Edit Data Supplier' : 'Tambah Data Supplier' }}
+        </h5>
+        <button 
+          type="button" 
+          class="btn btn-outline-secondary btn-sm rounded-circle" 
+          @click="cancelAdd"
+          title="Tutup Form"
+          style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
+        >
+          <i class="bi bi-x-lg"></i>
+        </button>
       </div>
       <div class="card-body">
         <form @submit.prevent="saveSupplier">
           <div class="row">
-            <div class="col-md-3 mb-3">
-              <label class="form-label">Kode Supplier *</label>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Kode Supplier</label>
               <input
                 v-model="form.kode_supplier"
                 type="text"
                 class="form-control bg-light"
-                placeholder="SUP0001 (auto-generated)"
+                placeholder="Otomatis"
                 readonly
               >
-              <div class="form-text">Kode digenerate otomatis (SUP + 4 digit angka)</div>
+              <small class="text-muted">Kode digenerate otomatis</small>
             </div>
-            <div class="col-md-9 mb-3">
-              <label class="form-label">Nama Supplier *</label>
+            <div class="col-md-8 mb-3">
+              <label class="form-label">Nama Supplier</label>
               <input
+                ref="namaSupplierInput"
                 v-model="form.nama_supplier"
                 type="text"
                 class="form-control"
-                placeholder="PT. Food Supplier Indonesia"
+                placeholder="Masukkan nama supplier"
                 required
               >
             </div>
           </div>
 
           <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Alamat Lengkap *</label>
+            <div class="col-md-8 mb-3">
+              <label class="form-label">Alamat Lengkap</label>
               <textarea
                 v-model="form.alamat"
                 class="form-control"
                 rows="3"
-                placeholder="Jl. Mawar No. 123, Jakarta Pusat"
+                placeholder="Jl. Mawar No. 123..."
                 required
               ></textarea>
             </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Status *</label>
+            <div class="col-md-4 mb-3">
+              <label class="form-label">Status</label>
               <select v-model="form.status" class="form-select" required>
                 <option value="">Pilih Status</option>
                 <option value="aktif">Aktif</option>
@@ -230,12 +121,12 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Telepon *</label>
+              <label class="form-label">Telepon Kantor</label>
               <input
                 v-model="form.telepon"
                 type="tel"
                 class="form-control"
-                placeholder="021-12345678"
+                placeholder="021-..."
                 required
               >
             </div>
@@ -252,7 +143,7 @@
 
           <div class="row">
             <div class="col-md-6 mb-3">
-              <label class="form-label">Nama Contact Person</label>
+              <label class="form-label">Nama Contact Person (CP)</label>
               <input
                 v-model="form.nama_cp"
                 type="text"
@@ -261,36 +152,151 @@
               >
             </div>
             <div class="col-md-6 mb-3">
-              <label class="form-label">Telepon Contact Person</label>
+              <label class="form-label">Telepon CP</label>
               <input
                 v-model="form.telepon_cp"
                 type="tel"
                 class="form-control"
-                placeholder="0812-3456-7890"
+                placeholder="0812-..."
               >
             </div>
           </div>
 
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary" @click="cancelAdd">
-              <i class="bi bi-x-circle me-2"></i>
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-light" @click="cancelAdd" :disabled="saving">
               Batal
             </button>
             <button type="submit" class="btn btn-primary" :disabled="saving">
-              <i class="bi bi-check-circle me-2"></i>
-              {{ saving ? 'Menyimpan...' : (editingId ? 'Update' : 'Simpan') }}
+              <i v-if="saving" class="bi bi-arrow-repeat me-2 spin"></i>
+              <i v-else class="bi bi-check-circle me-2"></i>
+              {{ saving ? 'Menyimpan...' : 'Simpan Perubahan' }}
             </button>
           </div>
         </form>
       </div>
     </div>
+
+    <!-- Data Table Card -->
+    <div v-if="!showAddForm" class="card border-0 shadow-sm overflow-hidden">
+      <div class="card-body p-0">
+        <!-- Loading State -->
+        <div v-if="loading" class="text-center py-5">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+          <p class="mt-2 text-muted">Memuat data supplier...</p>
+        </div>
+
+        <!-- Empty State -->
+        <div v-else-if="filteredSuppliers.length === 0" class="text-center py-5">
+          <div class="mb-4">
+            <i class="bi bi-truck text-primary" style="font-size: 4rem; opacity: 0.5;"></i>
+          </div>
+          <h5 class="text-dark">Data Tidak Ditemukan</h5>
+          <p class="text-muted">Tidak ada data supplier yang sesuai dengan kriteria</p>
+        </div>
+
+        <!-- Table Responsive -->
+        <div v-else class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th class="border-0 px-4">Kode</th>
+                <th class="border-0">Nama Supplier</th>
+                <th class="border-0">Kontak</th>
+                <th class="border-0">Contact Person</th>
+                <th class="border-0">Status</th>
+                <th class="border-0 text-center">Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="supplier in paginatedSuppliers" :key="supplier.id_supplier" class="align-middle">
+                <td class="px-4">
+                  <span class="badge bg-primary bg-opacity-10 text-primary fw-bold">
+                    {{ supplier.kode_supplier }}
+                  </span>
+                </td>
+                <td>
+                  <div class="fw-bold text-dark">{{ supplier.nama_supplier }}</div>
+                  <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ supplier.alamat }}</small>
+                </td>
+                <td>
+                  <div class="small">
+                    <div v-if="supplier.telepon"><i class="bi bi-telephone text-muted me-1"></i>{{ supplier.telepon }}</div>
+                    <div v-if="supplier.email" class="text-primary"><i class="bi bi-envelope text-muted me-1"></i>{{ supplier.email }}</div>
+                  </div>
+                </td>
+                <td>
+                  <div v-if="supplier.nama_cp">
+                    <div class="fw-semibold small text-dark">{{ supplier.nama_cp }}</div>
+                    <div class="small text-muted">{{ supplier.telepon_cp || '-' }}</div>
+                  </div>
+                  <span v-else class="text-muted small">-</span>
+                </td>
+                <td>
+                  <span class="badge rounded-pill px-3 py-1" :class="getStatusBadgeClass(supplier.status)">
+                    {{ supplier.status_display }}
+                  </span>
+                </td>
+                <td>
+                  <div class="d-flex justify-content-center gap-1">
+                    <button
+                      class="btn btn-sm btn-outline-primary border-0 rounded-circle"
+                      @click="editSupplier(supplier)"
+                    >
+                      <i class="bi bi-pencil"></i>
+                    </button>
+                    <button
+                      class="btn btn-sm btn-outline-danger border-0 rounded-circle"
+                      @click="deleteSupplier(supplier.id_supplier)"
+                    >
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div v-if="!showAddForm && totalPages > 1" class="d-flex justify-content-between align-items-center mt-4">
+      <div class="text-muted small">
+        Menampilkan {{ paginatedSuppliers.length }} dari {{ filteredSuppliers.length }} data
+      </div>
+      <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" :class="{ disabled: currentPage === 1 }">
+            <button class="page-link" @click="currentPage--" :disabled="currentPage === 1">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          <li
+            v-for="page in totalPages"
+            :key="page"
+            class="page-item"
+            :class="{ active: currentPage === page }"
+          >
+            <button class="page-link" @click="currentPage = page">{{ page }}</button>
+          </li>
+          <li class="page-item" :class="{ disabled: currentPage === totalPages }">
+            <button class="page-link" @click="currentPage++" :disabled="currentPage === totalPages">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import { useToast } from 'vue-toastification'
 import supplierService from '@/services/supplierService'
+import Swal from 'sweetalert2'
 
 const toast = useToast()
 
@@ -304,6 +310,10 @@ const searchQuery = ref('')
 const statusFilter = ref('')
 const currentPage = ref(1)
 const itemsPerPage = 10
+
+// Refs for UI
+const namaSupplierInput = ref(null)
+const supplierFormCard = ref(null)
 
 // Form
 const form = ref({
@@ -377,8 +387,12 @@ const saveSupplier = async () => {
     cancelAdd()
   } catch (error) {
     console.error('Error saving supplier:', error)
-    const message = error.response?.data?.message || 'Gagal menyimpan data supplier'
-    toast.error(message)
+    if (error.response?.data?.errors) {
+        const firstError = Object.values(error.response.data.errors)[0][0]
+        toast.error(firstError)
+    } else {
+        toast.error(error.response?.data?.message || 'Gagal menyimpan data supplier')
+    }
   } finally {
     saving.value = false
   }
@@ -397,21 +411,39 @@ const editSupplier = (supplier) => {
     status: supplier.status
   }
   showAddForm.value = true
+  
+  nextTick(() => {
+    if (supplierFormCard.value) {
+      supplierFormCard.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    }
+    if (namaSupplierInput.value) {
+      namaSupplierInput.value.focus()
+    }
+  })
 }
 
 const deleteSupplier = async (id) => {
   const supplier = suppliers.value.find(s => s.id_supplier === id)
   if (!supplier) return
 
-  if (confirm(`Apakah Anda yakin ingin menghapus supplier "${supplier.nama_supplier}"?`)) {
+  const result = await Swal.fire({
+    title: 'Hapus Supplier?',
+    text: `Anda akan menghapus "${supplier.nama_supplier}". Tindakan ini tidak dapat dibatalkan!`,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#dc3545',
+    confirmButtonText: 'Ya, Hapus!',
+    cancelButtonText: 'Batal'
+  })
+
+  if (result.isConfirmed) {
     try {
       await supplierService.delete(id)
       toast.success('Supplier berhasil dihapus')
       await fetchSuppliers()
     } catch (error) {
       console.error('Error deleting supplier:', error)
-      const message = error.response?.data?.message || 'Gagal menghapus supplier'
-      toast.error(message)
+      toast.error(error.response?.data?.message || 'Gagal menghapus supplier')
     }
   }
 }
@@ -445,28 +477,18 @@ const generateKodeSupplier = () => {
 const cancelAdd = () => {
   showAddForm.value = false
   editingId.value = null
-  form.value = {
-    kode_supplier: '',
-    nama_supplier: '',
-    alamat: '',
-    telepon: '',
-    email: '',
-    nama_cp: '',
-    telepon_cp: '',
-    status: 'aktif'
-  }
 }
 
 const getStatusBadgeClass = (status) => {
   switch (status) {
     case 'aktif':
-      return 'badge bg-success'
+      return 'bg-success bg-opacity-10 text-success'
     case 'nonaktif':
-      return 'badge bg-warning'
+      return 'bg-warning bg-opacity-10 text-warning'
     case 'blacklist':
-      return 'badge bg-danger'
+      return 'bg-danger bg-opacity-10 text-danger'
     default:
-      return 'badge bg-secondary'
+      return 'bg-secondary bg-opacity-10 text-secondary'
   }
 }
 
@@ -478,60 +500,24 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.spin {
+  animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(359deg); }
+}
+
 .table th {
-  border-top: none;
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-}
-
-.badge {
-  font-size: 0.75rem;
-  padding: 0.375rem 0.75rem;
-}
-
-.btn-circle {
-  width: 35px;
-  height: 35px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
+  color: #6c757d;
 }
 
 .card {
-  border-radius: 12px;
-  transition: all 0.3s ease;
-}
-
-.card:hover {
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-}
-
-.form-control:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.1);
-}
-
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.bg-gradient-success {
-  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: none !important;
-  background-color: transparent !important;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  border-radius: 1rem;
 }
 </style>

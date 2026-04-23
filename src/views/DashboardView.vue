@@ -1,132 +1,56 @@
 <template>
-  <div>
+  <div class="py-2">
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <div>
-        <h2 class="mb-0">Dashboard</h2>
-        <p class="text-muted mb-0">Selamat datang, {{ authStore.userName }}!</p>
-      </div>
-      <div class="d-flex align-items-center gap-3">
-        <span class="badge bg-primary fs-6">
-          <i class="bi bi-clock me-1"></i>
-          {{ currentTime }}
-        </span>
+        <h2 class="mb-1 text-dark fw-bold">Dashboard Overview</h2>
+        <p class="text-muted mb-0">Selamat datang kembali, <span class="text-primary fw-semibold">{{ authStore.userName }}</span>!</p>
       </div>
     </div>
 
     <!-- Quick Stats Cards -->
-    <div class="row mb-4">
-      <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-          <div class="card-body">
-            <div class="row no-gutters align-items-center">
-              <div class="col mr-2">
-                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
-                  Total Penerima Manfaat
-                </div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                  {{ stats.totalPenerima }}
-                </div>
+    <div class="row g-4 mb-4">
+      <div v-for="(stat, index) in quickStats" :key="index" class="col-xl-3 col-md-6">
+        <div class="card h-100 border-0 shadow-sm plumpy-card overflow-hidden">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <div :class="`stat-icon bg-${stat.color} bg-opacity-10 text-${stat.color}`">
+                <i :class="`bi ${stat.icon} fs-4`"></i>
               </div>
-              <div class="col-auto">
-                <i class="bi bi-people fa-2x text-gray-300"></i>
+              <div v-if="stat.trend" :class="`small fw-bold text-${stat.trendColor}`">
+                <i :class="`bi ${stat.trendIcon}`"></i> {{ stat.trend }}
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-          <div class="card-body">
-            <div class="row no-gutters align-items-center">
-              <div class="col mr-2">
-                <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                  Total Menu
-                </div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                  {{ stats.totalMenu }}
-                </div>
-              </div>
-              <div class="col-auto">
-                <i class="bi bi-menu-app fa-2x text-gray-300"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-          <div class="card-body">
-            <div class="row no-gutters align-items-center">
-              <div class="col mr-2">
-                <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                  Stok Tersedia
-                </div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                  {{ stats.stokTersedia }}
-                </div>
-                <div class="small text-muted">Items</div>
-              </div>
-              <div class="col-auto">
-                <i class="bi bi-basket fa-2x text-gray-300"></i>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-          <div class="card-body">
-            <div class="row no-gutters align-items-center">
-              <div class="col mr-2">
-                <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                  Distribusi Hari Ini
-                </div>
-                <div class="h5 mb-0 font-weight-bold text-gray-800">
-                  {{ stats.distribusiHariIni }}
-                </div>
-                <div class="small text-muted">Porsi</div>
-              </div>
-              <div class="col-auto">
-                <i class="bi bi-box-seam fa-2x text-gray-300"></i>
-              </div>
-            </div>
+            <div class="text-muted small fw-bold text-uppercase mb-1">{{ stat.label }}</div>
+            <h3 class="mb-0 fw-bold text-dark">{{ formatNumber(stat.value) }}</h3>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Statistics Charts -->
-    <div class="row mb-4">
-      <div class="col-xl-8 col-lg-7">
-        <div class="card shadow mb-4">
-          <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
-            <h6 class="m-0 font-weight-bold text-primary">Statistik Distribusi</h6>
-            <div class="dropdown">
-              <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-three-dots-vertical"></i>
-              </button>
-              <ul class="dropdown-menu">
-                <li><a class="dropdown-item" href="#">Export Data</a></li>
-                <li><a class="dropdown-item" href="#">Refresh</a></li>
-              </ul>
+    <div class="row g-4">
+      <!-- Main Chart Area -->
+      <div class="col-xl-8">
+        <div class="card border-0 shadow-sm plumpy-card h-100">
+          <div class="card-header bg-white py-4 px-4 border-0 d-flex align-items-center justify-content-between">
+            <div>
+              <h5 class="mb-0 fw-bold text-dark">Statistik Distribusi Bulanan</h5>
+              <p class="text-muted small mb-0 mt-1">Tren pengiriman makanan tahun {{ new Date().getFullYear() }}</p>
             </div>
+            <button class="btn btn-light btn-sm rounded-pill px-3 border-0" @click="fetchDashboardData">
+              <i class="bi bi-arrow-clockwise"></i>
+            </button>
           </div>
-          <div class="card-body">
-            <div class="chart-container" style="position: relative; height: 300px; width: 100%;">
+          <div class="card-body px-4 pb-4">
+            <div class="chart-container" style="position: relative; height: 320px; width: 100%;">
               <Bar
                 v-if="chartData && chartData.labels"
                 :data="chartData"
                 :options="chartOptions"
               />
-              <div v-else class="text-center py-5">
-                 <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">Loading...</span>
-                 </div>
-                 <p class="text-muted mt-2">Memuat data grafik...</p>
+              <div v-else class="h-100 d-flex flex-column align-items-center justify-content-center text-muted opacity-50">
+                <div class="spinner-border spinner-border-sm text-primary mb-3" role="status"></div>
+                <p class="small">Menyiapkan grafik distribusi...</p>
               </div>
             </div>
           </div>
@@ -134,29 +58,25 @@
       </div>
 
       <!-- Recent Activities -->
-      <div class="col-xl-4 col-lg-5">
-        <div class="card shadow mb-4">
-          <div class="card-header py-3">
-            <h6 class="m-0 font-weight-bold text-primary">Aktivitas Terkini</h6>
+      <div class="col-xl-4">
+        <div class="card border-0 shadow-sm plumpy-card h-100">
+          <div class="card-header bg-white py-4 px-4 border-0">
+            <h5 class="mb-0 fw-bold text-dark">Aktivitas Terkini</h5>
           </div>
-          <div class="card-body">
-            <div v-if="activities.length === 0" class="text-center py-3">
-              <p class="text-muted mb-0">Belum ada aktivitas</p>
+          <div class="card-body px-4 pt-0">
+            <div v-if="activities.length === 0" class="text-center py-5">
+              <i class="bi bi-journal-text fs-1 text-muted opacity-25"></i>
+              <p class="text-muted small mt-2">Belum ada aktivitas tercatat</p>
             </div>
-            <div v-else>
-              <div v-for="activity in activities" :key="activity.id" class="activity-item d-flex align-items-start mb-3">
-                <div class="activity-icon me-3">
-                  <div class="bg-primary bg-opacity-10 rounded-circle p-2">
-                    <i :class="activity.icon" class="text-primary"></i>
+            <div v-else class="timeline">
+              <div v-for="(activity, idx) in activities" :key="idx" class="timeline-item pb-4 position-relative">
+                <div class="d-flex align-items-start gap-3">
+                  <div :class="`activity-indicator shadow-sm bg-white text-primary`" style="z-index: 1;">
+                    <i :class="activity.icon"></i>
                   </div>
-                </div>
-                <div class="activity-content flex-grow-1">
-                  <div class="d-flex justify-content-between align-items-start">
-                    <div>
-                      <p class="mb-1 fw-semibold">{{ activity.title }}</p>
-                      <p class="text-muted small mb-1">{{ activity.description }}</p>
-                    </div>
-                    <small class="text-muted">{{ formatTime(activity.time) }}</small>
+                  <div class="flex-grow-1" style="min-width: 0;">
+                    <p class="mb-0 text-dark fw-bold small line-clamp-2">{{ activity.title }}</p>
+                    <small class="text-muted d-block mt-1">{{ activity.time }}</small>
                   </div>
                 </div>
               </div>
@@ -166,48 +86,76 @@
       </div>
     </div>
 
-    <!-- Recent Distributions -->
-    <div class="row">
+    <!-- Recent Distributions Table -->
+    <div class="row mt-4">
       <div class="col-12">
-        <div class="card shadow mb-4">
-          <div class="card-header py-3 d-flex justify-content-between align-items-center">
-            <h6 class="m-0 font-weight-bold text-primary">Distribusi Terkini</h6>
-            <router-link to="/transactions/distribusi-makanan" class="btn btn-sm btn-outline-primary">
-              Lihat Semua
+        <div class="card border-0 shadow-sm plumpy-card overflow-hidden">
+          <div class="card-header bg-white py-4 px-4 border-0 d-flex justify-content-between align-items-center">
+            <div>
+              <h5 class="mb-0 fw-bold text-dark">Distribusi Terkini</h5>
+              <p class="text-muted small mb-0 mt-1">Daftar 10 transaksi pengiriman terakhir</p>
+            </div>
+            <router-link to="/transactions/distribusi-makanan" class="btn btn-outline-primary rounded-pill btn-sm px-4">
+              Semua Data
             </router-link>
           </div>
-          <div class="card-body">
-            <div v-if="recentDistributions.length === 0" class="text-center py-3">
-              <p class="text-muted mb-0">Belum ada data distribusi terkini</p>
+          <div class="card-body p-0">
+            <div v-if="recentDistributions.length === 0" class="text-center py-5">
+              <p class="text-muted mb-0 small">Menunggu data distribusi...</p>
             </div>
             <div v-else class="table-responsive">
-              <table class="table table-bordered">
-                <thead>
+              <table class="table table-hover align-middle mb-0">
+                <thead class="table-light border-bottom-0">
                   <tr>
-                    <th>ID</th>
-                    <th>Tanggal</th>
-                    <th>Penerima</th>
-                    <th>Menu</th>
-                    <th>Jumlah</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
+                    <th class="ps-4 py-3 border-0 small text-uppercase fw-bold text-muted">ID</th>
+                    <th class="py-3 border-0 small text-uppercase fw-bold text-muted">Tanggal</th>
+                    <th class="py-3 border-0 small text-uppercase fw-bold text-muted">Penerima</th>
+                    <th class="py-3 border-0 small text-uppercase fw-bold text-muted">Menu</th>
+                    <th class="py-3 border-0 small text-uppercase fw-bold text-muted">Jumlah</th>
+                    <th class="py-3 border-0 small text-uppercase fw-bold text-muted">Status</th>
+                    <th class="pe-4 py-3 border-0 text-end small text-uppercase fw-bold text-muted">Aksi</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr v-for="item in recentDistributions" :key="item.id">
-                    <td>{{ item.id }}</td>
-                    <td>{{ formatDate(item.tanggal) }}</td>
-                    <td>{{ item.penerima }}</td>
-                    <td>{{ item.menu }}</td>
-                    <td>{{ item.jumlah }}</td>
-                    <td>
+                    <td class="ps-4 py-3 small fw-bold text-primary">#{{ item.id }}</td>
+                    <td class="py-3 small text-dark">{{ formatDate(item.tanggal) }}</td>
+                    <td class="py-3 small fw-semibold text-dark">
+                      <div v-if="Array.isArray(item.penerima) && item.penerima.length > 0">
+                        <ul class="list-unstyled mb-0 recipient-list">
+                          <li v-for="(name, idx) in item.penerima" :key="idx" class="d-flex align-items-center mb-1">
+                            <span class="bullet-dot me-2"></span>
+                            {{ name }}
+                          </li>
+                        </ul>
+                      </div>
+                      <div v-else-if="typeof item.penerima === 'string'">
+                        {{ item.penerima }}
+                      </div>
+                      <span v-else class="text-muted">No recipients</span>
+                    </td>
+                    <td class="py-3 small text-muted">
+                      <div v-if="item.menu && item.menu.includes(',')">
+                        <ul class="list-unstyled mb-0 recipient-list">
+                          <li v-for="(m, idx) in item.menu.split(',')" :key="idx" class="d-flex align-items-center mb-1">
+                            <span class="bullet-dot bg-secondary me-2" style="width: 4px; height: 4px; opacity: 0.4;"></span>
+                            {{ m.trim() }}
+                          </li>
+                        </ul>
+                      </div>
+                      <div v-else>
+                        {{ item.menu }}
+                      </div>
+                    </td>
+                    <td class="py-3 small fw-bold text-dark">{{ item.jumlah }} Porsi</td>
+                    <td class="py-3 small">
                       <span :class="getStatusBadgeClass(item.status)">
                         {{ item.status }}
                       </span>
                     </td>
-                    <td>
-                      <button class="btn btn-sm btn-primary" @click="viewDetail(item)">
-                        <i class="bi bi-eye"></i>
+                    <td class="pe-4 py-3 text-end">
+                      <button class="btn btn-light btn-sm rounded-circle shadow-sm border-0" @click="viewDetail(item)">
+                        <i class="bi bi-eye text-primary"></i>
                       </button>
                     </td>
                   </tr>
@@ -222,7 +170,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import dashboardService from '@/services/dashboardService'
 import { Bar } from 'vue-chartjs'
@@ -237,16 +185,11 @@ export default {
   },
   setup() {
     const authStore = useAuthStore()
-    const currentTime = ref('')
     const loading = ref(false)
-    const error = ref(null)
-
-    // Dashboard statistics
     const stats = ref({
       totalPenerima: 0,
       totalMenu: 0,
       stokTersedia: 0,
-      stokPercentage: 0, // Not available from API directly, might need calculation or removal
       distribusiHariIni: 0
     })
 
@@ -254,88 +197,48 @@ export default {
     const recentDistributions = ref([])
     const chartData = ref(null)
     
+    const quickStats = computed(() => [
+      { label: 'Penerima Manfaat', value: stats.value.totalPenerima, icon: 'bi-people', color: 'primary' },
+      { label: 'Total Menu', value: stats.value.totalMenu, icon: 'bi-menu-app', color: 'success' },
+      { label: 'Stok Bahan Baku', value: stats.value.stokTersedia, icon: 'bi-basket', color: 'info' },
+      { label: 'Kirim Hari Ini', value: stats.value.distribusiHariIni, icon: 'bi-truck', color: 'warning' }
+    ])
+
     const chartOptions = {
       responsive: true,
       maintainAspectRatio: false,
-      plugins: {
-        legend: {
-           display: false
-        }
-      },
+      plugins: { legend: { display: false } },
       scales: {
-        y: {
-           beginAtZero: true,
-           ticks: {
-              stepSize: 1
-           }
-        }
+        y: { beginAtZero: true, grid: { display: true, drawBorder: false, color: '#f0f0f0' }, ticks: { stepSize: 1, color: '#999' } },
+        x: { grid: { display: false }, ticks: { color: '#999' } }
       }
     }
 
     const updateTime = () => {
-      const now = new Date()
-      currentTime.value = now.toLocaleTimeString('id-ID', {
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
-      })
+      // Logic removed - now in LayoutView
     }
 
     const formatDate = (dateString) => {
       if (!dateString) return '-'
-      const date = new Date(dateString)
-      return date.toLocaleDateString('id-ID', {
-        day: 'numeric',
-        month: 'long',
-        year: 'numeric'
+      return new Date(dateString).toLocaleDateString('id-ID', {
+        day: 'numeric', month: 'short', year: 'numeric'
       })
     }
 
-    const formatTime = (dateInput) => {
-      if (!dateInput) return '-'
-      const date = new Date(dateInput)
-      const now = new Date()
-      const diff = now - date
-      const minutes = Math.floor(diff / 60000)
-      const hours = Math.floor(minutes / 60)
-      const days = Math.floor(hours / 24)
-
-      if (minutes < 1) return 'Baru saja'
-      if (minutes < 60) return `${minutes} menit lalu`
-      if (hours < 24) return `${hours} jam lalu`
-      return `${days} hari lalu`
-    }
-    
-    // Helper for number formatting
-    const formatNumber = (num) => {
-       return new Intl.NumberFormat('id-ID').format(num || 0)
-    }
+    const formatNumber = (num) => new Intl.NumberFormat('id-ID').format(num || 0)
 
     const getStatusBadgeClass = (status) => {
-      const statusClasses = {
-        completed: 'badge bg-success',
-        selesai: 'badge bg-success',
-        in_progress: 'badge bg-warning',
-        proses: 'badge bg-warning',
-        pending: 'badge bg-secondary',
-        menunggu: 'badge bg-secondary',
-        cancelled: 'badge bg-danger',
-        dibatalkan: 'badge bg-danger'
-      }
-      return statusClasses[status?.toLowerCase()] || 'badge bg-secondary'
+      const s = status?.toLowerCase() || ''
+      if (s.includes('selesai') || s.includes('complete')) return 'badge bg-success bg-opacity-10 text-success rounded-pill px-3 py-2'
+      if (s.includes('proses') || s.includes('progress')) return 'badge bg-warning bg-opacity-10 text-warning rounded-pill px-3 py-2'
+      return 'badge bg-secondary bg-opacity-10 text-secondary rounded-pill px-3 py-2'
     }
 
-    const viewDetail = (item) => {
-      console.log('View detail for:', item)
-    }
+    const viewDetail = (item) => console.log('View detail:', item)
     
     const fetchDashboardData = async () => {
       loading.value = true
-      error.value = null
       try {
-        console.log('Fetching dashboard data...')
-        
-        // Parallel requests for better performance
         const [statsRes, activitiesRes, distributionsRes, monthlyRes] = await Promise.allSettled([
           dashboardService.getStatistics(),
           dashboardService.getRecentActivities(),
@@ -343,131 +246,130 @@ export default {
           dashboardService.getMonthlyDistribution()
         ])
         
-        // Handle Statistics
         if (statsRes.status === 'fulfilled') {
             const data = statsRes.value.data.data
             stats.value = {
                 totalPenerima: data.total_penerima || 0,
                 totalMenu: data.total_menu || 0,
                 stokTersedia: data.stok_tersedia || 0,
-                distribusiHariIni: data.distribusi_hari_ini || 0,
-                stokPercentage: 0 // Placeholder
+                distribusiHariIni: data.distribusi_hari_ini || 0
             }
-        } else {
-             console.error('Failed to load stats:', statsRes.reason)
         }
 
-        // Handle Activities
         if (activitiesRes.status === 'fulfilled') {
-            activities.value = activitiesRes.value.data.data.map(act => ({
-                id: act.id,
-                title: act.title || 'Aktivitas',
-                description: act.description || '',
-                time: act.created_at || new Date(),
-                icon: act.icon || 'bi bi-circle'
-            }))
+            activities.value = activitiesRes.value.data.data
         }
 
         if (distributionsRes.status === 'fulfilled') {
-            recentDistributions.value = distributionsRes.value.data.data.map(dist => ({
-                id: dist.id,
-                tanggal: dist.tanggal,
-                penerima: dist.penerima || 'Unknown',
-                menu: dist.menu || 'Unknown',
-                jumlah: dist.jumlah,
-                status: dist.status
-            }))
+            recentDistributions.value = distributionsRes.value.data.data
         }
         
-        // Handle Monthly Distribution (Chart)
         if (monthlyRes.status === 'fulfilled') {
             const apiData = monthlyRes.value.data.data
             chartData.value = {
               labels: apiData.labels,
               datasets: apiData.datasets.map(ds => ({
                  ...ds,
-                 backgroundColor: '#667eea', // Use primary purple color
-                 borderRadius: 4
+                 backgroundColor: '#0d6efd',
+                 borderRadius: 20,
+                 barThickness: 20
               }))
             }
         }
-
       } catch (err) {
         console.error('Error fetching dashboard data:', err)
-        error.value = 'Gagal memuat data dashboard'
       } finally {
         loading.value = false
       }
     }
 
     onMounted(() => {
-      console.log('🏠 Dashboard component mounted!')
-      updateTime()
-      setInterval(updateTime, 1000)
       fetchDashboardData()
     })
 
     return {
-      authStore,
-      currentTime,
-      stats,
-      activities,
-      recentDistributions,
-      formatDate,
-      formatTime,
-      formatNumber,
-      getStatusBadgeClass,
-      viewDetail,
-      loading,
-      error,
-      chartData,
-      chartOptions
+      authStore, stats, quickStats, activities, recentDistributions,
+      formatDate, formatNumber, getStatusBadgeClass, viewDetail, loading, chartData, chartOptions, fetchDashboardData
     }
   }
 }
 </script>
 
 <style scoped>
-.border-left-primary {
-  border-left: 4px solid #4e73df !important;
-  background: linear-gradient(135deg, rgba(78, 115, 223, 0.05) 0%, rgba(78, 115, 223, 0.1) 100%);
+.plumpy-card { border-radius: 1.25rem; }
+
+.stat-icon {
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
 }
 
-.border-left-success {
-  border-left: 4px solid #1cc88a !important;
-  background: linear-gradient(135deg, rgba(28, 200, 138, 0.05) 0%, rgba(28, 200, 138, 0.1) 100%);
+.timeline {
+  position: relative;
+  margin-top: 10px;
 }
 
-.border-left-info {
-  border-left: 4px solid #36b9cc !important;
-  background: linear-gradient(135deg, rgba(54, 185, 204, 0.05) 0%, rgba(54, 185, 204, 0.1) 100%);
+.timeline::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 17px;
+  height: 100%;
+  width: 2px;
+  background-color: #f0f0f0;
 }
 
-.border-left-warning {
-  border-left: 4px solid #f6c23e !important;
-  background: linear-gradient(135deg, rgba(246, 194, 62, 0.05) 0%, rgba(246, 194, 62, 0.1) 100%);
+.activity-indicator {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 4px solid white;
 }
 
-.activity-item {
-  transition: all 0.3s ease;
+.timeline-item:last-child {
+  padding-bottom: 0 !important;
 }
 
-.activity-item:hover {
-  background-color: #f8f9fa;
-  border-radius: 8px;
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
 }
 
-.activity-icon {
+.recipient-list {
+  max-width: 600px;
+  column-count: 2;
+  column-gap: 1.5rem;
+}
+
+.recipient-list li {
+  break-inside: avoid-column;
+}
+
+.bullet-dot {
+  width: 6px;
+  height: 6px;
+  background-color: var(--primary-color);
+  border-radius: 50%;
+  display: inline-block;
   flex-shrink: 0;
+  opacity: 0.6;
 }
 
 .table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
+  background-color: transparent !important;
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
 }
 
-.badge {
-  font-size: 0.75rem;
+.table tr:hover {
+  background-color: rgba(13, 110, 253, 0.02);
 }
-
 </style>

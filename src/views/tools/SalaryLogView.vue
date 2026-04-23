@@ -101,17 +101,16 @@
                 <table class="table mb-0 align-middle custom-table">
                     <thead class="bg-light">
                         <tr>
-                            <th class="ps-4 text-secondary text-uppercase py-3" style="width: 250px;">Relawan</th>
+                            <th class="ps-4 text-secondary text-uppercase py-2" style="width: 200px;">Relawan</th>
                             <!-- Dynamic Date Headers -->
-                            <th v-for="d in dateHeaders" :key="d.date" class="text-center py-3" style="min-width: 100px;">
+                            <th v-for="d in dateHeaders" :key="d.date" class="text-center py-2" style="width: 80px;">
                                 <div class="d-flex flex-column align-items-center">
-                                    <span class="fw-bold text-dark small">{{ d.dayName }}</span>
-                                    <span class="badge bg-white text-secondary border rounded-pill fw-normal mt-1">{{ d.formattedDate }}</span>
-                                    <span v-if="d.isDouble" class="badge bg-warning text-dark position-absolute top-0 start-100 translate-middle badge-pill shadow-sm" style="font-size: 0.6rem;">2x</span>
+                                    <span class="fw-bold text-dark smaller">{{ d.dayName }}</span>
+                                    <span class="badge bg-white text-secondary border rounded-pill fw-normal mt-1" style="font-size: 0.65rem;">{{ d.formattedDate }}</span>
                                 </div>
                             </th>
-                            <th class="text-center bg-light-subtle text-secondary text-uppercase" style="width: 100px;">Hadir</th>
-                            <th class="text-end pe-4 bg-light-subtle text-secondary text-uppercase" style="width: 150px;">Total</th>
+                            <th class="text-center bg-light-subtle text-secondary text-uppercase py-2" style="width: 80px;">Hadir</th>
+                            <th class="text-end pe-4 bg-light-subtle text-secondary text-uppercase py-2" style="width: 130px;">Total</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -128,16 +127,16 @@
                                 <div class="input-wrapper mx-auto d-flex align-items-center justify-content-center" 
                                     :class="{'has-value': getAmount(emp.id_pegawai, d.date) > 0, 'double-pay': d.isDouble && getAmount(emp.id_pegawai, d.date) > 0}">
                                     
-                                    <span v-if="getAmount(emp.id_pegawai, d.date) > 0" class="fw-bold small">
+                                    <span v-if="getAmount(emp.id_pegawai, d.date) > 0" class="fw-bold" style="font-size: 0.75rem;">
                                         {{ formatCurrencySimple(getAmount(emp.id_pegawai, d.date)) }}
                                     </span>
-                                    <span v-else class="text-muted opacity-25 small">-</span>
+                                    <span v-else class="text-muted opacity-25" style="font-size: 0.75rem;">-</span>
                                 </div>
                             </td>
 
                             <!-- Totals -->
-                            <td class="text-center fw-bold text-primary bg-light-subtle">{{ calculateTotalPresence(emp.id_pegawai) }}</td>
-                            <td class="text-end pe-4 fw-bold text-dark bg-light-subtle">{{ formatCurrency(calculateTotalSalary(emp.id_pegawai)) }}</td>
+                            <td class="text-center fw-bold text-primary bg-light-subtle py-2">{{ calculateTotalPresence(emp.id_pegawai) }}</td>
+                            <td class="text-end pe-4 fw-bold text-dark bg-light-subtle py-2">{{ formatCurrency(calculateTotalSalary(emp.id_pegawai)) }}</td>
                         </tr>
                         
                         <!-- Footer Totals -->
@@ -296,8 +295,7 @@ export default {
             days.push({
                 date: d.toISOString().split('T')[0],
                 dayName: new Intl.DateTimeFormat('id-ID', { weekday: 'short' }).format(d),
-                formattedDate: new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short' }).format(d),
-                isDouble: d.getDay() === 4 // 4 is Thursday
+                formattedDate: new Intl.DateTimeFormat('id-ID', { day: 'numeric', month: 'short' }).format(d)
             })
         }
         return days
@@ -362,9 +360,8 @@ export default {
                         // Weekend: always leave as 0 (no auto-fill)
                         autoFilledLogs[pid][dayInfo.date] = 0
                     } else if (baseRate > 0) {
-                        // Weekday: Auto-fill with rate (apply 2x for Thursday)
-                        const multiplier = dayInfo.isDouble ? 2 : 1
-                        autoFilledLogs[pid][dayInfo.date] = baseRate * multiplier
+                        // Weekday: Auto-fill with rate
+                        autoFilledLogs[pid][dayInfo.date] = baseRate
                     } else {
                         // No rate defined, leave as 0
                         autoFilledLogs[pid][dayInfo.date] = 0
@@ -470,8 +467,7 @@ export default {
                 return
             }
 
-            const multiplier = dayInfo.isDouble ? 2 : 1
-            const finalAmount = baseRate * multiplier
+            const finalAmount = baseRate
             
             if (!logs.value[pid]) logs.value[pid] = {}
             logs.value[pid][currentDate] = finalAmount
@@ -676,8 +672,8 @@ export default {
 
 <style scoped>
 .custom-table th {
-    font-size: 0.75rem;
-    letter-spacing: 0.5px;
+    font-size: 0.7rem;
+    letter-spacing: 0.3px;
 }
 .custom-table td {
     font-size: 0.85rem;
@@ -685,7 +681,7 @@ export default {
 .input-wrapper {
     background-color: transparent;
     border-radius: 6px;
-    width: 80px;
+    width: 65px;
     transition: all 0.2s;
     border: 1px solid transparent;
 }

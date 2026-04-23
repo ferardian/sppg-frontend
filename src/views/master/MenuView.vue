@@ -21,24 +21,24 @@
 
     <!-- Search Filter -->
     <div v-if="!showAddForm" class="card mb-4 shadow-sm border-0">
-        <div class="card-body p-3">
-            <div class="row align-items-center">
-                <div class="col-md-4">
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0">
-                            <i class="bi bi-search text-muted"></i>
-                        </span>
-                        <input 
-                            type="text" 
-                            class="form-control border-start-0 ps-0" 
-                            placeholder="Cari nama atau kode menu..." 
-                            v-model="searchQuery" 
-                            @input="debouncedSearch"
-                        >
-                    </div>
-                </div>
+      <div class="card-body p-3">
+        <div class="row align-items-center">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0">
+                <i class="bi bi-search text-muted"></i>
+              </span>
+              <input 
+                type="text" 
+                class="form-control border-start-0 ps-0" 
+                placeholder="Cari nama atau kode menu..." 
+                v-model="searchQuery" 
+                @input="debouncedSearch"
+              >
             </div>
+          </div>
         </div>
+      </div>
     </div>
 
     <!-- Loading indicator -->
@@ -53,7 +53,7 @@
     <div v-if="error" class="alert alert-danger" role="alert">
       <i class="bi bi-exclamation-triangle me-2"></i>
       {{ error }}
-      <button class="btn btn-sm btn-outline-danger ms-2" @click="fetchMenuData">
+      <button class="btn btn-sm btn-outline-danger ms-2" @click="fetchMenuData(currentPage)">
         <i class="bi bi-arrow-clockwise me-1"></i>
         Retry
       </button>
@@ -75,20 +75,20 @@
     </div>
 
     <!-- Form tambah menu -->
-    <div v-if="showAddForm" class="card mb-4 shadow-sm" ref="menuFormCard">
-      <div class="card-header bg-gradient-primary text-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-          <i class="bi bi-plus-circle me-2"></i>
+    <div v-if="showAddForm" class="card mb-4 shadow-sm border-0" ref="menuFormCard">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary">
+          <i class="bi bi-menu-button-wide me-2"></i>
           {{ editingId ? 'Edit Data Menu' : 'Tambah Data Menu' }}
         </h5>
         <button 
           type="button" 
-          class="btn btn-sm btn-light rounded-circle" 
+          class="btn btn-outline-secondary btn-sm rounded-circle" 
           @click="cancelAdd"
           title="Tutup Form"
           style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
         >
-          <i class="bi bi-x-lg text-dark"></i>
+          <i class="bi bi-x-lg"></i>
         </button>
       </div>
       <div class="card-body">
@@ -109,6 +109,7 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Nama Menu</label>
               <input
+                ref="namaMenuInput"
                 v-model="form.nama_menu"
                 type="text"
                 class="form-control"
@@ -119,9 +120,9 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Kategori</label>
               <select class="form-select" v-model="form.kategori">
-                 <option value="">-- Pilih Kategori --</option>
-                 <option value="Basah">Basah</option>
-                 <option value="Kering">Kering</option>
+                <option value="">-- Pilih Kategori --</option>
+                <option value="Basah">Basah</option>
+                <option value="Kering">Kering</option>
               </select>
             </div>
           </div>
@@ -232,17 +233,15 @@
           <div class="row">
             <div class="col-md-12 mb-3">
               <label class="form-label mb-3">Bahan Baku</label>
-
-              <div class="bahan-baku-section">
-                <div v-if="form.bahan_baku.length === 0" class="bahan-baku-empty mb-3">
-                  <i class="bi bi-basket"></i>
-                  <p>Belum ada bahan baku ditambahkan</p>
-                  <small>Klik tombol di bawah untuk memulai</small>
+              <div class="bahan-baku-section p-3 border rounded bg-light">
+                <div v-if="form.bahan_baku.length === 0" class="text-center py-3 text-muted">
+                  <i class="bi bi-basket fs-2"></i>
+                  <p class="mb-0">Belum ada bahan baku ditambahkan</p>
                 </div>
 
-                <div v-for="(bahan, index) in form.bahan_baku" :key="index" class="card mb-2">
-                  <div class="card-body py-2">
-                    <div class="row align-items-center">
+                <div v-for="(bahan, index) in form.bahan_baku" :key="index" class="card mb-2 border-0 shadow-sm">
+                  <div class="card-body p-2">
+                    <div class="row g-2 align-items-center">
                       <div class="col-md-6">
                         <v-select
                           v-model="bahan.id_bahan_baku"
@@ -260,12 +259,11 @@
                           placeholder="Keterangan (Opsional)"
                         >
                       </div>
-                      <div class="col-md-1">
+                      <div class="col-md-1 text-center">
                         <button
                           type="button"
-                          class="btn btn-sm btn-outline-danger rounded-circle"
+                          class="btn btn-sm btn-outline-danger border-0"
                           @click="removeBahanBakuField(index)"
-                          title="Hapus bahan baku"
                         >
                           <i class="bi bi-trash"></i>
                         </button>
@@ -274,10 +272,9 @@
                   </div>
                 </div>
 
-                <!-- Tombol Tambah di Bawah -->
                 <button
                   type="button"
-                  class="btn btn-outline-primary w-100 border-2 border-dashed py-2 mt-2"
+                  class="btn btn-outline-primary btn-sm w-100 mt-2"
                   @click="addBahanBakuField"
                 >
                   <i class="bi bi-plus-circle me-1"></i>
@@ -287,8 +284,8 @@
             </div>
           </div>
 
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary" @click="cancelAdd" :disabled="loading">
+          <div class="d-flex justify-content-end gap-2 mt-4">
+            <button type="button" class="btn btn-light" @click="cancelAdd" :disabled="loading">
               Batal
             </button>
             <button type="submit" class="btn btn-primary" :disabled="loading">
@@ -302,84 +299,61 @@
     </div>
 
     <!-- Tabel data menu -->
-    <div v-if="hasMenuData" class="card shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
+    <div v-if="hasMenuData" class="card border-0 shadow-sm overflow-hidden">
+      <div class="card-header bg-white py-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
-            <i class="bi bi-menu-button-wide me-2"></i>
+          <h5 class="mb-0 fw-bold text-dark">
+            <i class="bi bi-menu-button-wide me-2 text-primary"></i>
             Data Menu
           </h5>
-          <span class="badge bg-white text-primary">
-            {{ menuData.length }} Data
+          <span class="badge bg-primary bg-opacity-10 text-primary">
+            {{ totalItems }} Total Data
           </span>
         </div>
       </div>
       <div class="card-body p-0">
-        <div class="table-responsive">
+        <div class="table-responsive" style="max-height: 600px; overflow-y: auto;">
           <table class="table table-hover mb-0">
-            <thead class="table-light">
+            <thead class="table-light sticky-top" style="z-index: 10;">
               <tr>
-                <th class="border-0">
-                  <i class="bi bi-hash me-1"></i>Kode
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-tag me-1"></i>Nama Menu
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-tags me-1"></i>Kategori
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-fire me-1"></i>Kalori
-                </th>
-                <th class="border-0">
-                  <i class="bi bi-toggle-on me-1"></i>Status
-                </th>
-                <th class="border-0 text-center" style="width: 120px;">
-                  <i class="bi bi-gear me-1"></i>Aksi
-                </th>
+                <th class="border-0 px-4">Kode</th>
+                <th class="border-0">Nama Menu</th>
+                <th class="border-0">Kategori</th>
+                <th class="border-0">Kalori</th>
+                <th class="border-0">Status</th>
+                <th class="border-0 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
               <tr v-for="item in menuData" :key="item.id_menu" class="align-middle">
-                <td>
-                  <span class="fw-bold text-primary px-2 py-1" style="background-color: #e3f2fd; border: 1px solid #bbdefb; border-radius: 4px;">
+                <td class="px-4">
+                  <span class="badge bg-primary bg-opacity-10 text-primary fw-bold">
                     {{ item.kode_menu }}
                   </span>
                 </td>
                 <td>
-                  <div class="fw-semibold text-dark">{{ item.nama_menu }}</div>
-                  <small class="text-muted">{{ item.deskripsi || '-' }}</small>
+                  <div class="fw-bold text-dark">{{ item.nama_menu }}</div>
+                  <small class="text-muted d-block text-truncate" style="max-width: 250px;">{{ item.deskripsi || '-' }}</small>
                 </td>
                 <td>
-                   <span class="badge" :class="item.kategori === 'Basah' ? 'bg-info' : (item.kategori === 'Kering' ? 'bg-warning' : 'bg-secondary')">
-                      {{ item.kategori || '-' }}
-                   </span>
+                  <span class="badge rounded-pill" :class="item.kategori === 'Basah' ? 'bg-info bg-opacity-10 text-info' : 'bg-warning bg-opacity-10 text-warning'">
+                    {{ item.kategori || '-' }}
+                  </span>
                 </td>
                 <td>
-                  <div class="d-flex align-items-center">
-                    <i class="bi bi-fire text-danger me-2"></i>
-                    <span class="fw-semibold">{{ item.kalori_per_porsi || 0 }} kcal</span>
-                  </div>
+                  <span class="fw-semibold text-dark"><i class="bi bi-fire text-danger me-1"></i>{{ item.kalori_per_porsi || 0 }} kcal</span>
                 </td>
                 <td>
-                  <span class="badge px-2 py-1" :class="item.status === 'aktif' ? 'bg-success' : 'bg-warning'">
+                  <span class="badge px-3 py-1 rounded-pill" :class="item.status === 'aktif' ? 'bg-success bg-opacity-10 text-success' : 'bg-secondary bg-opacity-10 text-secondary'">
                     {{ item.status === 'aktif' ? 'Aktif' : 'Nonaktif' }}
                   </span>
                 </td>
                 <td>
                   <div class="d-flex justify-content-center gap-1">
-                    <button
-                      class="btn btn-sm btn-outline-primary rounded-circle"
-                      @click="editMenu(item)"
-                      :title="'Edit ' + item.nama_menu"
-                    >
+                    <button class="btn btn-sm btn-outline-primary border-0 rounded-circle" @click="editMenu(item)">
                       <i class="bi bi-pencil"></i>
                     </button>
-                    <button
-                      class="btn btn-sm btn-outline-danger rounded-circle"
-                      @click="deleteMenu(item.id_menu)"
-                      :title="'Hapus ' + item.nama_menu"
-                    >
+                    <button class="btn btn-sm btn-outline-danger border-0 rounded-circle" @click="deleteMenu(item.id_menu)">
                       <i class="bi bi-trash"></i>
                     </button>
                   </div>
@@ -389,6 +363,34 @@
           </table>
         </div>
       </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div v-if="hasMenuData && lastPage > 1" class="d-flex justify-content-between align-items-center mt-4">
+      <div class="text-muted small">
+        Menampilkan {{ menuData.length }} dari {{ totalItems }} data
+      </div>
+      <nav aria-label="Page navigation">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item" :class="{ disabled: currentPage === 1 }">
+            <button class="page-link" @click="changePage(currentPage - 1)">
+              <i class="bi bi-chevron-left"></i>
+            </button>
+          </li>
+          
+          <li v-for="page in lastPage" :key="page" class="page-item" :class="{ active: currentPage === page }">
+            <button class="page-link" @click="changePage(page)">
+              {{ page }}
+            </button>
+          </li>
+          
+          <li class="page-item" :class="{ disabled: currentPage === lastPage }">
+            <button class="page-link" @click="changePage(currentPage + 1)">
+              <i class="bi bi-chevron-right"></i>
+            </button>
+          </li>
+        </ul>
+      </nav>
     </div>
   </div>
 </template>
@@ -418,8 +420,15 @@ export default {
     const loading = ref(false)
     const error = ref('')
     const searchQuery = ref('')
+    const namaMenuInput = ref(null)
     let searchTimeout = null
     
+    // Pagination State
+    const currentPage = ref(1)
+    const lastPage = ref(1)
+    const totalItems = ref(0)
+    const perPage = ref(10)
+
     // Ref for form card (for auto-scroll)
     const menuFormCard = ref(null)
 
@@ -448,18 +457,39 @@ export default {
     })
 
     // Methods
-    const fetchMenuData = async () => {
+    const fetchMenuData = async (page = 1) => {
       try {
         loading.value = true
         error.value = ''
+        currentPage.value = page
         
-        const params = {}
+        const params = {
+          page: page,
+          per_page: perPage.value
+        }
+        
         if (searchQuery.value) {
             params.search = searchQuery.value
         }
 
         const response = await menuService.getAll(params)
-        menuData.value = response.data || response.data?.data || response || []
+        
+        // Handle Laravel Pagination structure
+        if (response.data && Array.isArray(response.data)) {
+          menuData.value = response.data
+          if (response.meta) {
+            currentPage.value = response.meta.current_page
+            lastPage.value = response.meta.last_page
+            totalItems.value = response.meta.total
+          }
+        } else if (Array.isArray(response)) {
+          menuData.value = response
+          totalItems.value = response.length
+          lastPage.value = 1
+        } else {
+          menuData.value = []
+        }
+        
         console.log('Menu data fetched:', menuData.value)
       } catch (err) {
         error.value = 'Gagal memuat data menu: ' + (err.message || 'Terjadi kesalahan sistem')
@@ -469,6 +499,11 @@ export default {
       }
     }
 
+    const changePage = (page) => {
+      if (page >= 1 && page <= lastPage.value) {
+        fetchMenuData(page)
+      }
+    }
     
     const fetchBahanBaku = async () => {
       try {
@@ -491,19 +526,8 @@ export default {
         
         if (editingId.value) {
           response = await menuService.update(editingId.value, form.value)
-          const index = menuData.value.findIndex(item => item.id_menu === editingId.value)
-          if (index !== -1) {
-            menuData.value[index] = response.data || response
-          }
         } else {
           response = await menuService.create(form.value)
-          console.log('Create response:', response)
-
-          const newItem = response.data || response
-          if (newItem) {
-            menuData.value.push(newItem)
-            console.log('Updated menuData:', menuData.value)
-          }
         }
 
         resetForm()
@@ -519,7 +543,7 @@ export default {
           toast.success('Menu berhasil ditambahkan!')
         }
 
-        await fetchMenuData()
+        await fetchMenuData(currentPage.value)
       } catch (err) {
         console.error('Error saving menu:', err)
         
@@ -572,20 +596,22 @@ export default {
         editingId.value = item.id_menu
         showAddForm.value = true
         console.log('Form after edit:', form.value)
+
+        // Auto focus and scroll
+        nextTick(() => {
+          if (menuFormCard.value) {
+            menuFormCard.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+          }
+          if (namaMenuInput.value) {
+            namaMenuInput.value.focus()
+          }
+        })
       } catch (err) {
         console.error('Error fetching menu details:', err)
         toast.error('Gagal memuat detail menu: ' + (err.message || 'Terjadi kesalahan sistem'))
       } finally {
         loading.value = false
       }
-      
-      // Scroll to form after everything is done (moved outside try-catch)
-      // Use setTimeout to ensure DOM is fully updated
-      setTimeout(() => {
-        if (menuFormCard.value) {
-          menuFormCard.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        }
-      }, 100)
     }
 
     const deleteMenu = async (id) => {
@@ -618,9 +644,8 @@ export default {
         try {
           loading.value = true
           await menuService.delete(id)
-          menuData.value = menuData.value.filter(item => item.id_menu !== id)
           toast.success('Menu berhasil dihapus')
-          console.log('Menu deleted with id:', id)
+          await fetchMenuData(currentPage.value)
         } catch (err) {
           console.error('Error deleting menu:', err)
           toast.error('Gagal menghapus menu: ' + (err.message || 'Terjadi kesalahan sistem'))
@@ -687,7 +712,7 @@ export default {
     const debouncedSearch = () => {
         if (searchTimeout) clearTimeout(searchTimeout)
         searchTimeout = setTimeout(() => {
-            fetchMenuData()
+            fetchMenuData(1)
         }, 500)
     }
 
@@ -710,6 +735,10 @@ export default {
       editingId,
       searchQuery,
       debouncedSearch,
+      currentPage,
+      lastPage,
+      totalItems,
+      changePage,
       fetchMenuData,
       saveMenu,
       editMenu,
@@ -719,236 +748,23 @@ export default {
       removeBahanBakuField,
       generateKodeMenu,
       resetForm,
+      namaMenuInput
     }
   }
 }
 </script>
 
-<style scoped>
-/* Custom styles untuk Menu view */
-
-/* Gradient backgrounds */
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-}
-
-/* Table styling */
-.table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  border-top: none;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.table td {
-  vertical-align: middle;
-  border-color: #f1f3f5;
-}
-
-.table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-/* Badge improvements */
-.badge {
-  font-size: 0.75rem;
-  padding: 0.5em 0.75em;
-  font-weight: 500;
-}
-
-/* Card improvements */
-.card {
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.card:hover {
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-  transform: translateY(-2px);
-}
-
-/* Header styling */
-.text-dark {
-  color: #1a1a1a !important;
-}
-
-.text-muted {
-  color: #6c757d !important;
-}
-
-/* Button styling */
-.btn {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-outline-primary:hover {
-  background-color: #667eea;
-  border-color: #667eea;
-  transform: scale(1.1);
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  transform: scale(1.1);
-}
-
-.btn-rounded-pill {
-  border-radius: 50px;
-}
-
-/* Form styling */
-.form-control {
-  border-radius: 8px;
-  border: 1px solid #e0e6ed;
-  transition: all 0.3s ease;
-  padding: 0.75rem 1rem;
-}
-
-.form-control:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-  transform: translateY(-1px);
-}
-
-.form-select {
-  border-radius: 8px;
-  border: 1px solid #e0e6ed;
-  transition: all 0.3s ease;
-  padding: 0.75rem 1rem;
-}
-
-.form-select:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-}
-
-.form-label {
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-}
-
-/* Loading spinner animation */
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* Table responsiveness */
-.table-responsive {
-  overflow-x: auto;
-  border-radius: 0 0 12px 12px;
-}
-
-/* Icon styling */
-.bi {
-  font-size: 1rem;
-}
-
-/* Action buttons */
-.btn-sm {
-  width: 36px;
-  height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-}
-
-/* Bahan baku section styling */
-.bahan-baku-section {
-  border: 2px dashed #e0e6ed;
-  border-radius: 12px;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
-  transition: all 0.3s ease;
-  overflow: visible !important;
-}
-
-.bahan-baku-section .card {
-  overflow: visible !important;
-}
-
-.bahan-baku-section .card:focus-within {
-  z-index: 100 !important;
-  position: relative;
-}
-
-.bahan-baku-section .card-body {
-  overflow: visible !important;
-}
-
-.bahan-baku-section:hover {
-  border-color: #667eea;
-  background: linear-gradient(135deg, #f5f7ff 0%, #eef2ff 100%);
-}
-
-/* Bahan baku card styling */
-.card-body.py-2 {
-  padding: 0.75rem 1rem !important;
-  background: #ffffff;
-  border-radius: 8px;
-  margin-bottom: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
-}
-
-.card-body.py-2:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-  transform: translateY(-1px);
-}
-
-/* Empty state for bahan baku */
-.bahan-baku-empty {
-  text-align: center;
-  padding: 2rem;
-  color: #6c757d;
-  font-style: italic;
-}
-
-.bahan-baku-empty i {
-  font-size: 2rem;
-  color: #dee2e6;
-  margin-bottom: 0.5rem;
-}
-
-/* Responsive improvements */
-@media (max-width: 768px) {
-  .btn-lg {
-    padding: 0.75rem 2rem;
-    font-size: 1rem;
-  }
-
-  .table th,
-  .table td {
-    padding: 0.75rem 0.5rem;
-    font-size: 0.875rem;
-  }
-}
-</style>
-
 <style>
 /* Global styles for vue-select appended to body */
 .vs__dropdown-menu {
   z-index: 9999 !important;
+}
+
+/* Sticky table header */
+.sticky-top {
+  position: sticky;
+  top: 0;
+  background-color: #f8f9fa !important;
+  box-shadow: 0 2px 2px -1px rgba(0, 0, 0, 0.05);
 }
 </style>

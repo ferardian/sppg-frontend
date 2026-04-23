@@ -11,8 +11,7 @@
       </div>
       <button
         v-if="!showAddForm"
-        class="btn btn-primary btn-lg rounded-pill px-4"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
+        class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm"
         @click="showAddForm = true"
       >
         <i class="bi bi-plus-circle me-2"></i>
@@ -39,9 +38,9 @@
     </div>
 
     <!-- Form tambah/edit jabatan -->
-    <div v-if="showAddForm" class="card mb-4 shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
-        <h5 class="mb-0">
+    <div v-if="showAddForm" ref="formSection" class="card mb-4 shadow-sm border-0">
+      <div class="card-header py-3 border-0">
+        <h5 class="mb-0 fw-bold text-primary">
           <i class="bi bi-plus-circle me-2"></i>
           {{ editingId ? 'Edit Jabatan' : 'Tambah Jabatan' }}
         </h5>
@@ -51,6 +50,7 @@
           <div class="mb-3">
             <label class="form-label">Nama Jabatan</label>
             <input
+              ref="namaJabatanInput"
               v-model="form.nama_jabatan"
               type="text"
               class="form-control"
@@ -73,14 +73,14 @@
     </div>
 
     <!-- Tabel data jabatan -->
-    <div v-if="jabatanData.length > 0" class="card shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
+    <div v-if="jabatanData.length > 0" class="card shadow-sm border-0">
+      <div class="card-header py-3 border-0">
         <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
+          <h5 class="mb-0 fw-bold text-primary">
             <i class="bi bi-briefcase me-2"></i>
             Data Jabatan
           </h5>
-          <span class="badge bg-white text-primary">
+          <span class="badge bg-primary">
             {{ jabatanData.length }} Jabatan
           </span>
         </div>
@@ -162,7 +162,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, nextTick } from 'vue'
 import jabatanService from '@/services/jabatanService'
 import { useToast } from 'vue-toastification'
 
@@ -174,6 +174,8 @@ export default {
     const jabatanData = ref([])
     const loading = ref(false)
     const error = ref('')
+    const formSection = ref(null)
+    const namaJabatanInput = ref(null)
 
     const form = ref({
       nama_jabatan: ''
@@ -232,6 +234,16 @@ export default {
       }
       editingId.value = jabatan.id
       showAddForm.value = true
+      
+      // Auto focus and scroll
+      nextTick(() => {
+        if (formSection.value) {
+          formSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+        if (namaJabatanInput.value) {
+          namaJabatanInput.value.focus()
+        }
+      })
     }
 
     const deleteJabatan = async (id) => {
@@ -277,107 +289,15 @@ export default {
       deleteJabatan,
       cancelAdd,
       resetForm,
-      editingId
+      editingId,
+      formSection,
+      namaJabatanInput
     }
   }
 }
 </script>
 
 <style scoped>
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-}
-
-.table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  border-top: none;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.table td {
-  vertical-align: middle;
-  border-color: #f1f3f5;
-}
-
-.table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-.badge {
-  font-size: 0.75rem;
-  padding: 0.5em 0.75em;
-  font-weight: 500;
-}
-
-.card {
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.card:hover {
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-  transform: translateY(-2px);
-}
-
-.btn {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-outline-primary:hover {
-  background-color: #667eea;
-  border-color: #667eea;
-  transform: scale(1.1);
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  transform: scale(1.1);
-}
-
-.form-control {
-  border-radius: 8px;
-  border: 1px solid #e0e6ed;
-  transition: all 0.3s ease;
-  padding: 0.75rem 1rem;
-}
-
-.form-control:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
-  transform: translateY(-1px);
-}
-
-.form-label {
-  font-weight: 600;
-  color: #495057;
-  margin-bottom: 0.5rem;
-  font-size: 0.875rem;
-}
-
-.spin {
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
 .btn-sm {
   width: 36px;
   height: 36px;

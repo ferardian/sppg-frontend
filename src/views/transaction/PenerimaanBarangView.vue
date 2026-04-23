@@ -11,7 +11,6 @@
       </div>
       <button
         class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
         @click="showAddForm = true"
         v-if="!showAddForm"
       >
@@ -174,12 +173,12 @@
 
     <!-- Form Terima Barang -->
     <div v-if="showAddForm" class="card border-0 shadow-lg rounded-4 overflow-hidden mb-4">
-      <div class="card-header text-white py-3 border-0 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
-        <h5 class="mb-0 fw-bold">
+      <div class="card-header py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary">
           <i class="bi bi-plus-circle me-2"></i>
           Penerimaan Barang Baru
         </h5>
-        <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-primary" @click="cancelAdd">
+        <button class="btn btn-light btn-sm rounded-pill px-3 fw-bold text-primary shadow-sm" @click="cancelAdd">
           <i class="bi bi-x-lg me-1"></i>
           Batal
         </button>

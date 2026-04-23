@@ -86,10 +86,10 @@
     </div>
 
     <!-- Form tambah bahan baku -->
-    <div v-if="showAddForm" class="card mb-4 shadow-sm" ref="bahanBakuFormCard">
-      <div class="card-header bg-gradient-primary text-white py-3 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">
-          <i class="bi bi-plus-circle me-2"></i>
+    <div v-if="showAddForm" class="card mb-4 shadow-sm border-0" ref="bahanBakuFormCard">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary">
+          <i class="bi bi-basket me-2"></i>
           {{ editingId ? 'Edit Data Bahan Baku' : 'Tambah Data Bahan Baku' }}
         </h5>
         <button 
@@ -120,6 +120,7 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Nama Bahan Baku</label>
               <input
+                ref="namaBahanInput"
                 v-model="form.nama_bahan_baku"
                 type="text"
                 class="form-control"
@@ -229,13 +230,13 @@
 
     <!-- Tabel data bahan baku -->
     <div v-if="hasBahanBakuData" class="card shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
+      <div class="card-header py-3">
         <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
+          <h5 class="mb-0 fw-bold text-primary">
             <i class="bi bi-basket me-2"></i>
             Data Bahan Baku
           </h5>
-          <span class="badge bg-white text-primary">
+          <span class="badge bg-primary-light">
             {{ bahanBakuData.length }} Data
           </span>
         </div>
@@ -461,10 +462,11 @@ export default {
     const loading = ref(false)
     const saveLoading = ref(false)
     const masterLoading = ref(false) // For master data CRUD
-    const bahanBakuList = ref([])
     const kategoriList = ref([])
     const satuanList = ref([])
     const error = ref('')
+    const searchQuery = ref('')
+    const namaBahanInput = ref(null)
     
     // Ref for form card (for auto-scroll)
     const bahanBakuFormCard = ref(null)
@@ -495,7 +497,6 @@ export default {
 
     // Methods
     // Search
-    const searchQuery = ref('')
     let searchTimeout = null
 
     // Pagination State
@@ -655,12 +656,15 @@ export default {
       showAddForm.value = true
       console.log('Form after edit:', form.value)
       
-      // Scroll to form after DOM update
-      setTimeout(() => {
+      // Auto focus and scroll
+      nextTick(() => {
         if (bahanBakuFormCard.value) {
           bahanBakuFormCard.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
-      }, 100)
+        if (namaBahanInput.value) {
+          namaBahanInput.value.focus()
+        }
+      })
     }
 
     const deleteBahanBaku = async (id) => {
@@ -936,19 +940,16 @@ export default {
       formatCurrency,
       getStokStatusClass,
       getStokTextColor,
-      getStokStatusClass,
-      getStokTextColor,
       masterLoading,
       openMasterModal,
       saveMasterData,
       deleteMasterData,
       prepareEditMaster,
-      kategoriList,
-      satuanList,
       // Fix: Add missing master variables
       masterForm,
       activeMasterType,
-      masterList
+      masterList,
+      namaBahanInput
     }
   }
 }
@@ -956,85 +957,6 @@ export default {
 
 <style scoped>
 /* Custom styles untuk Bahan Baku view */
-
-/* Gradient backgrounds */
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-}
-
-/* Table styling */
-.table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  border-top: none;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.table td {
-  vertical-align: middle;
-  border-color: #f1f3f5;
-}
-
-.table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-/* Badge improvements */
-.badge {
-  font-size: 0.75rem;
-  padding: 0.5em 0.75em;
-  font-weight: 500;
-}
-
-/* Card improvements */
-.card {
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.card:hover {
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-  transform: translateY(-2px);
-}
-
-/* Header styling */
-.text-dark {
-  color: #1a1a1a !important;
-}
-
-.text-muted {
-  color: #6c757d !important;
-}
-
-/* Button styling */
-.btn {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-outline-primary:hover {
-  background-color: #667eea;
-  border-color: #667eea;
-  transform: scale(1.1);
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  transform: scale(1.1);
-}
 
 .btn-rounded-pill {
   border-radius: 50px;

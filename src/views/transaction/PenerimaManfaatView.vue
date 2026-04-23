@@ -11,8 +11,7 @@
       </div>
       <button
         v-if="!showAddForm"
-        class="btn btn-primary btn-lg rounded-pill px-4"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
+        class="btn btn-primary rounded-pill px-4"
         @click="showAddForm = true"
       >
         <i class="bi bi-plus-circle me-2"></i>
@@ -41,12 +40,12 @@
     <!-- Alert jika belum ada data -->
     <div v-if="!hasPenerimaManfaatData && !showAddForm && !loading" class="card border-0 shadow-sm">
       <div class="card-body text-center py-5">
-        <div class="mb-4">
-          <i class="bi bi-person-check text-primary" style="font-size: 5rem;"></i>
+        <div class="mb-4 text-primary opacity-25">
+          <i class="bi bi-person-check" style="font-size: 5rem;"></i>
         </div>
-        <h4 class="mb-3 text-dark">Belum Ada Data Penerima Manfaat</h4>
+        <h4 class="mb-3 text-dark fw-bold">Belum Ada Data Penerima Manfaat</h4>
         <p class="text-muted mb-4">Mulai dengan menambahkan data penerima manfaat pertama Anda</p>
-        <button class="btn btn-primary btn-lg rounded-pill px-5" @click="showAddForm = true">
+        <button class="btn btn-primary rounded-pill px-5" @click="showAddForm = true">
           <i class="bi bi-plus-circle me-2"></i>
           Tambah Penerima Pertama
         </button>
@@ -54,33 +53,31 @@
     </div>
 
     <!-- Tabel Data -->
-    <div v-if="hasPenerimaManfaatData && !showAddForm" class="card shadow-sm">
-      <div class="card-header text-white py-3" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
+    <div v-if="hasPenerimaManfaatData && !showAddForm" class="card border-0 shadow-sm overflow-hidden">
+      <div class="card-header bg-white py-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
           <div class="d-flex align-items-center gap-2">
-            <h5 class="mb-0">
-              <i class="bi bi-person-check me-2"></i>
+            <h5 class="mb-0 fw-bold text-dark">
               Data Penerima Manfaat
             </h5>
-            <span class="badge bg-white text-primary bg-opacity-25 border border-white">
+            <span class="badge bg-primary-light">
               {{ filteredPenerimaManfaatData.length }} Data
             </span>
           </div>
           
           <div class="d-flex gap-2">
             <div class="input-group input-group-sm" style="max-width: 250px;">
-              <span class="input-group-text bg-white border-0 text-primary">
+              <span class="input-group-text bg-light border-0 text-muted">
                 <i class="bi bi-search"></i>
               </span>
               <input 
                 type="text" 
-                class="form-control border-0" 
+                class="form-control bg-light border-0" 
                 placeholder="Cari..." 
                 v-model="searchQuery"
-                style="background-color: rgba(255,255,255,0.9);"
               >
             </div>
-            <button class="btn btn-light btn-sm rounded-circle shadow-sm" @click="fetchPenerimaManfaatData" title="Refresh Data">
+            <button class="btn btn-light btn-sm rounded-3" @click="fetchPenerimaManfaatData" title="Refresh Data">
               <i class="bi bi-arrow-clockwise text-primary"></i>
             </button>
           </div>
@@ -196,53 +193,61 @@
     </div>
 
     <!-- Form Tambah/Edit -->
-    <div v-if="showAddForm" class="card border-0 shadow-sm" ref="penerimaFormCard">
-      <div class="card-header text-white py-3 d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;">
-        <h5 class="mb-0">
-          <i class="bi bi-plus-circle me-2"></i>
+    <div v-if="showAddForm" class="card border-0 shadow-sm mb-4 animate__animated animate__fadeInDown" ref="penerimaFormCard">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary">
+          <i class="bi bi-person-plus me-2"></i>
           {{ editingId ? 'Edit' : 'Tambah' }} Penerima Manfaat
         </h5>
         <button 
           type="button" 
-          class="btn btn-sm btn-light rounded-circle" 
+          class="btn btn-outline-secondary btn-sm rounded-circle" 
           @click="cancelAdd"
           title="Tutup Form"
           style="width: 32px; height: 32px; padding: 0; display: flex; align-items: center; justify-content: center;"
         >
-          <i class="bi bi-x-lg text-dark"></i>
+          <i class="bi bi-x-lg"></i>
         </button>
       </div>
       <div class="card-body">
         <form @submit.prevent="savePenerimaManfaat">
+          <!-- Row 1: Identitas Lembaga -->
           <div class="row">
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Kode Lembaga *</label>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">Kode Lembaga *</label>
               <input
                 v-model="form.kode_lembaga"
                 type="text"
-                class="form-control"
-                :placeholder="editingId ? form.kode_lembaga : 'PM00001 (contoh)'"
+                class="form-control bg-light"
                 readonly
-                :class="{ 'bg-light': !editingId }"
               >
-              <small class="text-muted" v-if="!editingId">Format: PM00001, PM00002, dst.</small>
-              <small class="text-muted" v-else>Kode lembaga tidak dapat diubah</small>
             </div>
-            <div class="col-md-8 mb-3">
-              <label class="form-label">Nama Lembaga *</label>
+            <div class="col-md-6 mb-3">
+              <label class="form-label fw-bold">Nama Lembaga *</label>
               <input
+                ref="namaLembagaInput"
                 v-model="form.nama_lembaga"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan nama lembaga (contoh: SD N 1 Pekalongan)"
+                placeholder="Contoh: SD N 1 Pekalongan"
                 required
+              >
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">NPSN/NSS</label>
+              <input
+                v-model="form.npsn_nss"
+                type="text"
+                class="form-control"
+                placeholder="Masukkan NPSN/NSS"
               >
             </div>
           </div>
 
+          <!-- Row 2: Penanggung Jawab & Kontak -->
           <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Jenis Penerima * <small class="text-muted">({{ jenisPenerimaList.length }} items)</small></label>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-bold">Jenis Penerima *</label>
               <select v-model="form.id_jenis_penerima" class="form-select" required>
                 <option value="">Pilih Jenis Penerima</option>
                 <option
@@ -254,113 +259,49 @@
                 </option>
               </select>
             </div>
-            <div class="col-md-6 mb-3">
-              <label class="form-label">NPSN/NSS</label>
-              <input
-                v-model="form.npsn_nss"
-                type="text"
-                class="form-control"
-                placeholder="Masukkan NPSN/NSS"
-              >
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Nama Kepala Sekolah *</label>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-bold">Kepala Sekolah *</label>
               <input
                 v-model="form.kepala_sekolah"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan nama kepala sekolah"
+                placeholder="Nama Kepala Sekolah"
                 required
               >
             </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-12 mb-3">
-              <label class="form-label">Alamat *</label>
-              <textarea
-                v-model="form.alamat"
-                class="form-control"
-                rows="3"
-                placeholder="Masukkan alamat lengkap lembaga"
-                required
-              ></textarea>
-            </div>
-          </div>
-
-          <div class="row">
             <div class="col-md-4 mb-3">
-              <label class="form-label">Kecamatan *</label>
+              <label class="form-label fw-bold">Telepon</label>
               <input
-                v-model="form.kecamatan"
+                v-model="form.telepon"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan kecamatan"
-                required
-              >
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Kabupaten/Kota *</label>
-              <input
-                v-model="form.kabupaten_kota"
-                type="text"
-                class="form-control"
-                placeholder="Masukkan kabupaten/kota"
-                required
-              >
-            </div>
-            <div class="col-md-4 mb-3">
-              <label class="form-label">Provinsi *</label>
-              <input
-                v-model="form.provinsi"
-                type="text"
-                class="form-control"
-                placeholder="Masukkan provinsi"
-                required
+                placeholder="Nomor Telepon"
               >
             </div>
           </div>
 
+          <!-- Row 3: Administrasi -->
           <div class="row">
             <div class="col-md-4 mb-3">
-              <label class="form-label">Jumlah Siswa</label>
+              <label class="form-label fw-bold">Email</label>
               <input
-                v-model="form.jumlah_siswa"
-                type="number"
+                v-model="form.email"
+                type="email"
                 class="form-control"
-                placeholder="Masukkan jumlah siswa"
-                min="1"
+                placeholder="Alamat Email"
               >
             </div>
-          </div>
-
-           <div class="row">
-            <div class="col-md-6 mb-3">
-               <label class="form-label">Porsi Besar</label>
-               <input v-model="form.porsi_besar" type="number" class="form-control" min="0" placeholder="0">
-            </div>
-            <div class="col-md-6 mb-3">
-               <label class="form-label">Porsi Kecil</label>
-               <input v-model="form.porsi_kecil" type="number" class="form-control" min="0" placeholder="0">
-            </div>
-          </div>
-
-          <div class="row">
-            <div class="col-md-6 mb-3">
-              <label class="form-label">Status Gizi Umum *</label>
-              <select v-model="form.status_gizi_umum" class="form-select" required>
-                <option value="">Pilih Status Gizi Umum</option>
-                <option value="baik">Baik</option>
-                <option value="cukup">Cukup</option>
-                <option value="kurang">Kurang</option>
-                <option value="buruk">Buruk</option>
-              </select>
+            <div class="col-md-4 mb-3">
+              <label class="form-label fw-bold">Tanggal Daftar *</label>
+              <input
+                v-model="form.tanggal_daftar"
+                type="date"
+                class="form-control"
+                required
+              >
             </div>
             <div class="col-md-4 mb-3">
-              <label class="form-label">Status *</label>
+              <label class="form-label fw-bold">Status *</label>
               <select v-model="form.status" class="form-select" required>
                 <option value="">Pilih Status</option>
                 <option value="aktif">Aktif</option>
@@ -371,44 +312,93 @@
             </div>
           </div>
 
+          <!-- Row 4: Alamat -->
+          <div class="row">
+            <div class="col-md-12 mb-3">
+              <label class="form-label fw-bold">Alamat Lengkap *</label>
+              <textarea
+                v-model="form.alamat"
+                class="form-control"
+                rows="2"
+                placeholder="Masukkan alamat lengkap lembaga"
+                required
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Row 5: Lokasi -->
           <div class="row">
             <div class="col-md-4 mb-3">
-              <label class="form-label">Telepon</label>
+              <label class="form-label fw-bold">Kecamatan *</label>
               <input
-                v-model="form.telepon"
+                v-model="form.kecamatan"
                 type="text"
                 class="form-control"
-                placeholder="Masukkan telepon lembaga"
+                placeholder="Kecamatan"
+                required
               >
             </div>
             <div class="col-md-4 mb-3">
-              <label class="form-label">Email</label>
+              <label class="form-label fw-bold">Kabupaten/Kota *</label>
               <input
-                v-model="form.email"
-                type="email"
+                v-model="form.kabupaten_kota"
+                type="text"
                 class="form-control"
-                placeholder="Masukkan email lembaga"
+                placeholder="Kabupaten/Kota"
+                required
               >
             </div>
             <div class="col-md-4 mb-3">
-              <label class="form-label">Tanggal Daftar *</label>
+              <label class="form-label fw-bold">Provinsi *</label>
               <input
-                v-model="form.tanggal_daftar"
-                type="date"
+                v-model="form.provinsi"
+                type="text"
                 class="form-control"
+                placeholder="Provinsi"
                 required
               >
             </div>
           </div>
 
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary" @click="cancelAdd">
-              <i class="bi bi-x-lg me-1"></i>
+          <!-- Row 6: Statistik & Gizi -->
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">Jumlah Siswa</label>
+              <input
+                v-model="form.jumlah_siswa"
+                type="number"
+                class="form-control"
+                placeholder="Jumlah Siswa"
+                min="0"
+              >
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold text-primary">Porsi Besar</label>
+              <input v-model="form.porsi_besar" type="number" class="form-control border-primary border-opacity-25" min="0" placeholder="0">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold text-info">Porsi Kecil</label>
+              <input v-model="form.porsi_kecil" type="number" class="form-control border-info border-opacity-25" min="0" placeholder="0">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label fw-bold">Status Gizi Umum *</label>
+              <select v-model="form.status_gizi_umum" class="form-select" required>
+                <option value="">Pilih Status Gizi</option>
+                <option value="baik">Baik</option>
+                <option value="cukup">Cukup</option>
+                <option value="kurang">Kurang</option>
+                <option value="buruk">Buruk</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <button type="button" class="btn btn-outline-secondary px-4" @click="cancelAdd">
               Batal
             </button>
-            <button type="submit" class="btn btn-success" :disabled="loading">
-              <i class="bi bi-check-lg me-1"></i>
-              {{ loading ? 'Menyimpan...' : (editingId ? 'Update' : 'Simpan') }}
+            <button type="submit" class="btn btn-primary px-4 shadow-sm" :disabled="loading">
+              <i class="bi bi-check-circle me-2"></i>
+              {{ loading ? 'Menyimpan...' : (editingId ? 'Update Data' : 'Simpan Data') }}
             </button>
           </div>
         </form>
@@ -443,6 +433,7 @@ export default {
     const error = ref('')
     const editingId = ref(null)
     const searchQuery = ref('')
+    const namaLembagaInput = ref(null)
     
     // Ref for form card (for auto-scroll)
     const penerimaFormCard = ref(null)
@@ -597,12 +588,15 @@ export default {
       editingId.value = item.id_penerima
       showAddForm.value = true
       
-      // Scroll to form after DOM update
-      setTimeout(() => {
+      // Auto focus and scroll
+      nextTick(() => {
         if (penerimaFormCard.value) {
           penerimaFormCard.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
         }
-      }, 100)
+        if (namaLembagaInput.value) {
+          namaLembagaInput.value.focus()
+        }
+      })
     }
 
     const deletePenerimaManfaat = async (id) => {
@@ -726,6 +720,8 @@ export default {
       editPenerimaManfaat,
       deletePenerimaManfaat,
       cancelAdd,
+      penerimaFormCard,
+      namaLembagaInput
     }
   }
 }
@@ -757,18 +753,6 @@ export default {
 
 .card {
   border-radius: 12px;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: none !important;
-  background-color: transparent !important;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* Scrollable Table Styles */

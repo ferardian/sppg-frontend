@@ -10,8 +10,7 @@
         <p class="text-muted mb-0 small">Audit stok, pencatatan barang keluar, dan penyesuaian saldo</p>
       </div>
       <button
-        class="btn btn-primary btn-lg rounded-pill px-4"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
+        class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm"
         @click="showAddForm = true"
         v-if="!showAddForm"
       >
@@ -158,15 +157,15 @@
       </div>
     </div>
 
-    <!-- Form Catat Stok -->
-    <div v-if="showAddForm" class="card border-0 shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
+    <!-- Form Audit / Keluar -->
+    <div v-if="showAddForm" class="card shadow-sm border-0 mb-4">
+      <div class="card-header bg-white py-3">
         <div class="d-flex justify-content-between align-items-center">
-          <h5 class="mb-0">
+          <h5 class="mb-0 fw-bold text-primary">
             <i class="bi bi-clipboard-plus me-2"></i>
             Audit / Penyesuaian Stok
           </h5>
-          <button class="btn btn-light btn-sm" @click="cancelAdd">
+          <button class="btn btn-outline-secondary btn-sm" @click="cancelAdd">
             <i class="bi bi-x-lg me-1"></i>
             Batal
           </button>
@@ -211,7 +210,6 @@
                 :reduce="pegawai => pegawai.id_pegawai"
                 label="nama_lengkap"
                 placeholder="Pilih Pegawai"
-                class="bg-white"
               >
                 <template #no-options="{ search, searching }">
                   <template v-if="searching">
@@ -310,7 +308,7 @@
           </div>
 
           <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary" @click="cancelAdd">
+            <button type="button" class="btn btn-outline-secondary" @click="cancelAdd">
               <i class="bi bi-x-circle me-2"></i>
               Batal
             </button>
@@ -761,10 +759,6 @@ onMounted(async () => {
   box-shadow: 0 0 0 0.2rem rgba(13,110,253,0.1);
 }
 
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
 .btn-circle {
   width: 35px;
   height: 35px;
@@ -773,17 +767,5 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 0;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: none !important;
-  background-color: transparent !important;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 </style>

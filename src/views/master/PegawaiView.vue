@@ -11,8 +11,7 @@
       </div>
       <button
         v-if="!showAddForm"
-        class="btn btn-primary btn-lg rounded-pill px-4"
-        style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important; border: none !important;"
+        class="btn btn-primary btn-lg rounded-pill px-4 shadow-sm"
         @click="openAddForm"
       >
         <i class="bi bi-plus-circle me-2"></i>
@@ -54,9 +53,9 @@
     </div>
 
     <!-- Form tambah pegawai -->
-    <div v-if="showAddForm" class="card mb-4 shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
-        <h5 class="mb-0">
+    <div v-if="showAddForm" ref="formSection" class="card mb-4 shadow-sm border-0">
+      <div class="card-header py-3 border-0">
+        <h5 class="mb-0 fw-bold text-primary">
           <i class="bi bi-plus-circle me-2"></i>
           {{ editingId ? 'Edit Data Pegawai' : 'Tambah Data Pegawai' }}
         </h5>
@@ -77,6 +76,7 @@
             <div class="col-md-6 mb-3">
               <label class="form-label">Nama Lengkap</label>
               <input
+                ref="namaLengkapInput"
                 v-model="form.nama_lengkap"
                 type="text"
                 class="form-control"
@@ -165,10 +165,10 @@
     </div>
 
     <!-- Tabel data pegawai -->
-    <div v-if="hasPegawaiData" class="card shadow-sm">
-      <div class="card-header bg-gradient-primary text-white py-3">
+    <div v-if="hasPegawaiData" class="card shadow-sm border-0">
+      <div class="card-header py-3 border-0">
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-          <h5 class="mb-0">
+          <h5 class="mb-0 fw-bold text-primary">
             <i class="bi bi-people me-2"></i>
             Data Pegawai
           </h5>
@@ -184,7 +184,7 @@
                 v-model="searchQuery"
               >
             </div>
-            <span class="badge bg-white text-primary">
+            <span class="badge bg-primary">
               {{ filteredPegawai.length }} / {{ pegawaiData.length }} Data
             </span>
           </div>
@@ -286,7 +286,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, nextTick } from 'vue'
 import pegawaiService from '@/services/pegawaiService'
 import jabatanService from '@/services/jabatanService'
 import vSelect from 'vue-select'
@@ -304,6 +304,8 @@ export default {
     const loading = ref(false)
     const error = ref('')
     const searchQuery = ref('')
+    const formSection = ref(null)
+    const namaLengkapInput = ref(null)
 
     // Form data
     const form = ref({
@@ -432,6 +434,16 @@ export default {
       editingId.value = pegawai.id_pegawai
       showAddForm.value = true
       console.log('Form after edit:', form.value)
+
+      // Auto focus and scroll
+      nextTick(() => {
+        if (formSection.value) {
+          formSection.value.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+        if (namaLengkapInput.value) {
+          namaLengkapInput.value.focus()
+        }
+      })
     }
 
     const deletePegawai = async (id) => {
@@ -521,7 +533,9 @@ export default {
       cancelAdd,
       resetForm,
       openAddForm,
-      jabatanList
+      jabatanList,
+      formSection,
+      namaLengkapInput
     }
   }
 }
@@ -529,81 +543,6 @@ export default {
 
 <style scoped>
 /* Custom styles untuk Pegawai view */
-
-/* Gradient backgrounds */
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-}
-
-/* Table styling */
-.table th {
-  background-color: #f8f9fa;
-  font-weight: 600;
-  border-top: none;
-  border-bottom: 2px solid #dee2e6;
-}
-
-.table td {
-  vertical-align: middle;
-  border-color: #f1f3f5;
-}
-
-.table tbody tr:hover {
-  background-color: #f8f9fa;
-}
-
-/* Badge improvements */
-.badge {
-  font-size: 0.75rem;
-  padding: 0.5em 0.75em;
-  font-weight: 500;
-}
-
-/* Card improvements */
-.card {
-  transition: all 0.3s ease;
-  border: none;
-}
-
-.card:hover {
-  box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
-  transform: translateY(-2px);
-}
-
-/* Header styling */
-.text-dark {
-  color: #2c3e50 !important;
-}
-
-/* Button styling */
-.btn {
-  border-radius: 8px;
-  transition: all 0.3s ease;
-  font-weight: 500;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border: none;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-}
-
-.btn-outline-primary:hover {
-  background-color: #667eea;
-  border-color: #667eea;
-  transform: scale(1.1);
-}
-
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  border-color: #dc3545;
-  transform: scale(1.1);
-}
 
 .btn-rounded-pill {
   border-radius: 50px;
@@ -718,18 +657,6 @@ export default {
     padding: 0.75rem 0.5rem;
     font-size: 0.875rem;
   }
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-  border: none !important;
-  background-color: transparent !important;
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
 }
 
 /* Sticky table header */

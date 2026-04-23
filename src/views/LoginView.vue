@@ -8,8 +8,8 @@
               <!-- Logo/Header -->
               <div class="text-center mb-4">
                 <div class="mb-3">
-                  <div class="logo-circle rounded-circle d-inline-flex align-items-center justify-content-center mx-auto" style="width: 80px; height: 80px; background: white; border: 2px solid #667eea;">
-                    <img src="/logo.png" alt="Logo" style="width: 50px; height: 50px; object-fit: contain;">
+                  <div class="logo-circle mx-auto mb-3">
+                    <img src="/logo.png" alt="Logo" style="width: 85%; height: 85%; object-fit: contain;">
                   </div>
                 </div>
                 <h2 class="fw-bold mb-2 brand-text">{{ configStore.sppgName }}</h2>
@@ -160,89 +160,103 @@ export default {
 
 <style scoped>
 .login-container {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background-color: var(--bg-app);
   min-height: 100vh;
-  margin: 0;
-  padding: 20px 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  overflow-y: auto;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-@media (max-width: 768px) {
-  .login-container {
-    align-items: flex-start;
-  }
+  padding: 2rem;
 }
 
 .card {
-  border: none;
-  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  background-color: var(--bg-card);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.04), 0 8px 10px -6px rgba(0, 0, 0, 0.04) !important;
+}
+
+.logo-circle {
+  width: 100px;
+  height: 100px;
+  background-color: white;
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  border-radius: 50%;
+}
+
+.brand-text {
+  color: var(--text-main);
+  font-size: 2.25rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle-text {
+  color: var(--text-muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.form-label {
+  font-weight: 600;
+  color: var(--text-main);
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
 }
 
 .input-group-text {
-  background-color: #f8f9fa;
+  background-color: transparent;
   border-right: none;
-}
-
-.form-control:focus {
-  border-color: #0d6efd;
-  box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  color: var(--text-muted);
+  padding-left: 1rem;
 }
 
 .form-control {
   border-left: none;
-}
-
-.btn-primary {
-  padding: 0.75rem;
-  font-weight: 500;
-  border: none;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #5a67d8 0%, #6b4c98 100%);
-  border: none;
+  padding: 0.75rem 1rem 0.75rem 0.5rem;
+  font-size: 0.9375rem;
+  background-color: transparent;
+  color: var(--text-main);
 }
 
 .form-control:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+  border-color: var(--primary-color);
+  box-shadow: none;
 }
 
-.logo-circle {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+.form-control:focus + .input-group-text {
+  border-color: var(--primary-color);
 }
 
-.brand-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: none;
-  font-size: 2.5rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.5));
+.input-group:focus-within {
+  box-shadow: 0 0 0 4px var(--primary-light);
+  border-radius: 0.375rem;
 }
 
-.subtitle-text {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-shadow: none;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+.input-group:focus-within .input-group-text,
+.input-group:focus-within .form-control {
+  border-color: var(--primary-color);
+}
+
+.btn-primary {
+  padding: 0.875rem;
+  border-radius: 12px;
+  font-size: 1rem;
+  letter-spacing: 0.025em;
+  margin-top: 1rem;
+}
+
+@media (max-width: 576px) {
+  .login-container {
+    padding: 1rem;
+  }
+  .card-body {
+    padding: 2rem !important;
+  }
 }
 </style>

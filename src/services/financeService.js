@@ -43,6 +43,11 @@ class FinanceService {
 
     async updateTransaction(id, data) {
         try {
+            // For FormData (file upload), we MUST use POST with _method spoofing for Laravel to read files correctly
+            if (data instanceof FormData) {
+                const response = await apiClient.post(`/finance/transaction/${id}`, data)
+                return response.data
+            }
             const response = await apiClient.put(`/finance/transaction/${id}`, data)
             return response.data
         } catch (error) {
@@ -57,6 +62,35 @@ class FinanceService {
             return response.data
         } catch (error) {
             console.error('Error deleting transaction:', error)
+            throw error
+        }
+    }
+
+    async exportEvidence(params) {
+        // We use a direct window open or hidden link for downloads to handle binary properly with auth
+        // but since we need auth header, we can also fetch as blob
+        try {
+            const token = localStorage.getItem('auth_token')
+            const queryParams = new URLSearchParams(params).toString()
+            const url = `${apiClient.defaults.baseURL}/finance/export-evidence?${queryParams}`
+            
+            // Create a temporary link and trigger download with the token in URL if possible, 
+            // or use axios to get blob (safer for auth)
+            const response = await apiClient.get(`/finance/export-evidence?${queryParams}`, {
+                responseType: 'blob'
+            })
+            
+            const blob = new Blob([response.data], { type: 'application/zip' })
+            const downloadUrl = window.URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = downloadUrl
+            link.setAttribute('download', `Bukti_Nota_${params.year}_${params.month}.zip`)
+            document.body.appendChild(link)
+            link.click()
+            link.remove()
+            window.URL.revokeObjectURL(downloadUrl)
+        } catch (error) {
+            console.error('Error exporting evidence:', error)
             throw error
         }
     }

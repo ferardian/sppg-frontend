@@ -11,29 +11,25 @@
       </button>
     </div>
 
-    <!-- Stats Overview (Optional but looks premium) -->
-    <div class="row mb-4">
+    <!-- Stats Overview -->
+    <div class="row g-3 mb-4">
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div class="card-body d-flex align-items-center p-3">
-            <div class="bg-primary bg-opacity-10 text-primary rounded-3 p-3 me-3">
-              <i class="bi bi-people fs-3"></i>
-            </div>
-            <div>
-              <h6 class="text-muted small mb-0">Total Kader</h6>
+        <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+          <div class="card-body position-relative p-3">
+            <div class="position-absolute top-0 start-0 h-100 bg-primary" style="width: 4px;"></div>
+            <div class="ps-2">
+              <h6 class="text-muted small text-uppercase fw-bold mb-1">Total Kader</h6>
               <h4 class="fw-bold mb-0">{{ kaders.length }}</h4>
             </div>
           </div>
         </div>
       </div>
       <div class="col-md-3">
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
-          <div class="card-body d-flex align-items-center p-3">
-            <div class="bg-success bg-opacity-10 text-success rounded-3 p-3 me-3">
-              <i class="bi bi-check-circle fs-3"></i>
-            </div>
-            <div>
-              <h6 class="text-muted small mb-0">Kader Aktif</h6>
+        <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+          <div class="card-body position-relative p-3">
+            <div class="position-absolute top-0 start-0 h-100 bg-success" style="width: 4px;"></div>
+            <div class="ps-2">
+              <h6 class="text-muted small text-uppercase fw-bold mb-1">Kader Aktif</h6>
               <h4 class="fw-bold mb-0">{{ kaders.filter(k => k.status === 'aktif').length }}</h4>
             </div>
           </div>
@@ -339,8 +335,8 @@ onMounted(() => {
 
 /* Custom switch colors */
 .form-check-input:checked {
-  background-color: #667eea;
-  border-color: #667eea;
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
 }
 </style>
 
