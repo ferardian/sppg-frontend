@@ -17,6 +17,7 @@ class SPAHandler(http.server.SimpleHTTPRequestHandler):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
     def end_headers(self):
+        self.send_header('Connection', 'close')
         path_lower = self.path.lower()
         if path_lower.endswith('.html') or path_lower == '/' or 'sw.js' in path_lower or 'manifest' in path_lower:
             self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
