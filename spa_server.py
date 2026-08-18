@@ -11,6 +11,8 @@ import threading
 PORTS = [3456, 8000]
 
 class SPAHandler(http.server.SimpleHTTPRequestHandler):
+    protocol_version = "HTTP/1.1"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=DIRECTORY, **kwargs)
 
@@ -40,43 +42,25 @@ class SPAHandler(http.server.SimpleHTTPRequestHandler):
             return
         self.path = '/index.html'
 
-class ThreadedIPv6TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    address_family = socket.AF_INET6
+class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
     daemon_threads = True
     allow_reuse_address = True
 
-class ThreadedIPv4TCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
-    address_family = socket.AF_INET
-    daemon_threads = True
-    allow_reuse_address = True
-
-def serve_v4(port):
+def serve_port(port):
     try:
-        with ThreadedIPv4TCPServer(("0.0.0.0", port), SPAHandler) as httpd:
-            print(f"Serving IPv4 SPA on http://0.0.0.0:{port}")
+        with ThreadedTCPServer(("", port), SPAHandler) as httpd:
+            print(f"Serving SPA on http://0.0.0.0:{port}")
             httpd.serve_forever()
     except Exception as e:
-        print(f"Error IPv4 on port {port}: {e}")
-
-def serve_v6(port):
-    try:
-        with ThreadedIPv6TCPServer(("::", port), SPAHandler) as httpd:
-            print(f"Serving IPv6 SPA on http://[::]:{port}")
-            httpd.serve_forever()
-    except Exception as e:
-        print(f"Error IPv6 on port {port}: {e}")
+        print(f"Error starting server on port {port}: {e}")
 
 if __name__ == "__main__":
     threads = []
     for p in PORTS:
-        t4 = threading.Thread(target=serve_v4, args=(p,), daemon=True)
-        t4.start()
-        threads.append(t4)
-        
-        t6 = threading.Thread(target=serve_v6, args=(p,), daemon=True)
-        t6.start()
-        threads.append(t6)
+        t = threading.Thread(target=serve_port, args=(p,), daemon=True)
+        t.start()
+        threads.append(t)
     
-    print(f"Multi-Threaded Dual-Stack (IPv4+IPv6) SPA server active on ports {PORTS}")
+    print(f"Multi-Threaded SPA server running on ports {PORTS}")
     for t in threads:
         t.join()
