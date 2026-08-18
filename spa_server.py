@@ -2,7 +2,7 @@ import http.server
 import socketserver
 import os
 
-PORT = 3456
+PORT = 8000
 DIRECTORY = "dist"
 
 class SPAHandler(http.server.SimpleHTTPRequestHandler):
