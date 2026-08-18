@@ -958,16 +958,106 @@ export default {
   .grid-10 {
     grid-template-columns: repeat(2, 98mm);
     grid-template-rows: repeat(5, 60mm);
+    gap: 2.5mm 5mm;
   }
   .grid-10 .sticker-card-print {
     width: 98mm;
     height: 60mm;
+    padding: 3px;
   }
-  .grid-10 .header-title { font-size: 11pt; }
-  .grid-10 .time-label { font-size: 5.5pt; }
-  .grid-10 .notice-text { font-size: 4.8pt; }
-  .grid-10 .gizi-thead-row th { font-size: 5pt; padding: 0.5px; }
-  .grid-10 .gizi-table td { font-size: 5.2pt; padding: 0.5px; }
+  .grid-10 .sticker-inner {
+    padding: 3px 5px;
+    border-width: 1px;
+  }
+  .grid-10 .sticker-header {
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+    border-bottom-width: 1px;
+  }
+  .grid-10 .header-icon-left svg,
+  .grid-10 .header-icon-right svg {
+    width: 18px;
+    height: 18px;
+  }
+  .grid-10 .header-title {
+    font-size: 10.5pt;
+    letter-spacing: 1px;
+  }
+  .grid-10 .time-grid {
+    row-gap: 1.5px;
+    column-gap: 2px;
+    margin-bottom: 2px;
+  }
+  .grid-10 .icon-circle {
+    width: 15px;
+    height: 15px;
+    font-size: 6.5pt;
+  }
+  .grid-10 .time-label {
+    font-size: 5.2pt;
+    gap: 3px;
+  }
+  .grid-10 .time-colon {
+    font-size: 6.5pt;
+  }
+  .grid-10 .time-pill {
+    min-width: 68px;
+    padding: 0px 3px;
+    font-size: 6pt;
+    border-width: 1px;
+  }
+  .grid-10 .sticker-middle {
+    gap: 4px;
+    margin-bottom: 2px;
+  }
+  .grid-10 .left-boxes {
+    gap: 2px;
+  }
+  .grid-10 .notice-box {
+    padding: 2px 3px;
+    gap: 3px;
+    border-width: 1px;
+    border-radius: 4px;
+  }
+  .grid-10 .notice-icon {
+    font-size: 9pt;
+  }
+  .grid-10 .notice-title {
+    font-size: 5.5pt;
+  }
+  .grid-10 .notice-text {
+    font-size: 4.4pt;
+    line-height: 1.1;
+  }
+  .grid-10 .gizi-box {
+    padding: 2px 3px;
+    border-width: 1px;
+    border-radius: 4px;
+  }
+  .grid-10 .gizi-header {
+    font-size: 6.5pt;
+    margin-bottom: 1px;
+  }
+  .grid-10 .gizi-thead-row th {
+    font-size: 4.5pt;
+    padding: 0.5px;
+    border-bottom-width: 1px;
+  }
+  .grid-10 .gizi-table td {
+    font-size: 4.8pt;
+    padding: 0.5px;
+  }
+  .grid-10 .gizi-icon {
+    font-size: 5pt;
+  }
+  .grid-10 .gizi-val .unit {
+    font-size: 4.2pt;
+  }
+  .grid-10 .sticker-footer {
+    font-size: 5.2pt;
+    padding-top: 2px;
+    border-top-width: 1px;
+  }
 
   .sticker-card-print {
     box-shadow: none !important;
