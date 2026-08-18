@@ -78,3 +78,42 @@ body {
 /* Utility for text */
 .text-main { color: var(--text-main); }
 .text-muted { color: var(--text-muted) !important; }
+
+/* Global Print Styles */
+@media print {
+  /* Hide layout navigation, sidebar, navbar topbar, and no-print elements */
+  .no-print,
+  .sidebar,
+  .navbar,
+  .offcanvas,
+  .breadcrumb,
+  nav,
+  header,
+  footer,
+  aside {
+    display: none !important;
+  }
+
+  /* Reset layout containers for print */
+  html, body {
+    background: #ffffff !important;
+    height: auto !important;
+    width: 100% !important;
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .app-container,
+  .main-content,
+  .page-content-wrapper {
+    position: static !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: visible !important;
+    background: transparent !important;
+    display: block !important;
+  }
+}
