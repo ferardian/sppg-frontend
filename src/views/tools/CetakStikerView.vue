@@ -215,8 +215,9 @@
                     </div>
                   </div>
 
-                  <!-- Row 1: Waktu Packing -->
-                  <div class="time-row">
+                  <!-- Time Grid: Waktu Packing & Baik Dikonsumsi Sebelum (Symmetrical Colons) -->
+                  <div class="time-grid">
+                    <!-- Row 1: Waktu Packing -->
                     <div class="time-label">
                       <div class="icon-circle icon-blue">
                         <i class="bi bi-clock-history"></i>
@@ -228,10 +229,8 @@
                       <span class="time-val">{{ form.waktu_packing || '__ : __' }}</span>
                       <span class="time-unit">WIB</span>
                     </div>
-                  </div>
 
-                  <!-- Row 2: Baik Dikonsumsi Sebelum -->
-                  <div class="time-row">
+                    <!-- Row 2: Baik Dikonsumsi Sebelum -->
                     <div class="time-label">
                       <div class="icon-circle icon-green">
                         <i class="bi bi-shield-check"></i>
@@ -377,8 +376,9 @@
                 </div>
               </div>
 
-              <!-- Row 1: Waktu Packing -->
-              <div class="time-row">
+              <!-- Time Grid: Waktu Packing & Baik Dikonsumsi Sebelum (Symmetrical Colons) -->
+              <div class="time-grid">
+                <!-- Row 1: Waktu Packing -->
                 <div class="time-label">
                   <div class="icon-circle icon-blue">
                     <i class="bi bi-clock-history"></i>
@@ -390,10 +390,8 @@
                   <span class="time-val">{{ form.waktu_packing || '__ : __' }}</span>
                   <span class="time-unit">WIB</span>
                 </div>
-              </div>
 
-              <!-- Row 2: Baik Dikonsumsi Sebelum -->
-              <div class="time-row">
+                <!-- Row 2: Baik Dikonsumsi Sebelum -->
                 <div class="time-label">
                   <div class="icon-circle icon-green">
                     <i class="bi bi-shield-check"></i>
@@ -687,11 +685,13 @@ export default {
   margin-left: 2px;
 }
 
-/* Time Rows */
-.time-row {
-  display: flex;
+/* Time Grid (Simetris Alignment for Colons) */
+.time-grid {
+  display: grid;
+  grid-template-columns: max-content 14px 1fr;
   align-items: center;
-  justify-content: space-between;
+  row-gap: 4px;
+  column-gap: 4px;
   margin-bottom: 4px;
 }
 .time-label {
@@ -711,6 +711,7 @@ export default {
   justify-content: center;
   color: #fff;
   font-size: 9pt;
+  flex-shrink: 0;
 }
 .icon-blue { background-color: #0d6efd; }
 .icon-green { background-color: #198754; }
@@ -718,6 +719,8 @@ export default {
 .time-colon {
   font-weight: 800;
   font-size: 10pt;
+  text-align: center;
+  color: #002b5b;
 }
 .time-pill {
   border: 1.5px solid #0d6efd;
@@ -727,8 +730,9 @@ export default {
   font-size: 9.5pt;
   font-weight: 800;
   color: #002b5b;
-  min-width: 140px;
+  min-width: 130px;
   text-align: center;
+  justify-self: end;
 }
 .pill-green {
   border-color: #198754;
