@@ -677,6 +677,7 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+  overflow: hidden;
 }
 
 /* Header */
@@ -1001,16 +1002,44 @@ export default {
   .grid-8 .sticker-card-print {
     width: 98mm;
     height: 74mm;
+    padding: 3.5px;
   }
-  .grid-8 .header-title { font-size: 14pt; }
-  .grid-8 .menu-bar { font-size: 7.5pt; padding: 1px 4px; margin-bottom: 3px; border-width: 1px; }
-  .grid-8 .menu-label { font-size: 6.5pt; padding: 0.5px 4px; }
-  .grid-8 .menu-val { font-size: 7.5pt; }
-  .grid-8 .time-label { font-size: 6.5pt; }
-  .grid-8 .time-pill { min-width: 85px; padding: 1px 4px; font-size: 7pt; }
-  .grid-8 .notice-text { font-size: 5.5pt; }
-  .grid-8 .gizi-thead-row th { font-size: 5.5pt; padding: 0.5px; }
-  .grid-8 .gizi-table td { font-size: 5.8pt; padding: 0.5px 1px; }
+  .grid-8 .sticker-inner {
+    padding: 3px 5px;
+    border-width: 1px;
+  }
+  .grid-8 .sticker-header {
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+    border-bottom-width: 1px;
+  }
+  .grid-8 .header-icon-left svg,
+  .grid-8 .header-icon-right svg {
+    width: 20px;
+    height: 20px;
+  }
+  .grid-8 .header-title { font-size: 12.5pt; letter-spacing: 1px; }
+  .grid-8 .menu-bar { font-size: 6.5pt; padding: 1px 3px; margin-bottom: 2px; border-width: 1px; }
+  .grid-8 .menu-label { font-size: 5.5pt; padding: 0.5px 3px; }
+  .grid-8 .menu-val { font-size: 6.5pt; }
+  .grid-8 .time-grid { row-gap: 1.5px; column-gap: 3px; margin-bottom: 2px; }
+  .grid-8 .icon-circle { width: 16px; height: 16px; font-size: 7pt; }
+  .grid-8 .time-label { font-size: 5.8pt; gap: 3px; }
+  .grid-8 .time-colon { font-size: 7pt; }
+  .grid-8 .time-pill { min-width: 76px; padding: 0px 3px; font-size: 6.2pt; border-width: 1px; }
+  .grid-8 .sticker-middle { gap: 3px; margin-bottom: 2px; }
+  .grid-8 .left-boxes { gap: 2.5px; }
+  .grid-8 .notice-box { padding: 2.5px 3.5px; gap: 3px; border-width: 1px; border-radius: 4px; }
+  .grid-8 .notice-icon { font-size: 10pt; }
+  .grid-8 .notice-title { font-size: 6.5pt; }
+  .grid-8 .notice-text { font-size: 4.8pt; line-height: 1.1; }
+  .grid-8 .gizi-box { padding: 2px 3.5px; border-width: 1px; border-radius: 4px; }
+  .grid-8 .gizi-header { font-size: 7pt; margin-bottom: 1px; }
+  .grid-8 .gizi-thead-row th { font-size: 5pt; padding: 0.5px; border-bottom-width: 1px; }
+  .grid-8 .gizi-table td { font-size: 5.2pt; padding: 0.5px; }
+  .grid-8 .gizi-icon { font-size: 5.5pt; }
+  .grid-8 .gizi-val .unit { font-size: 4.5pt; }
+  .grid-8 .sticker-footer { font-size: 5.8pt; padding-top: 1.5px; border-top-width: 1px; }
 
   .grid-10 {
     grid-template-columns: repeat(2, 98mm);
