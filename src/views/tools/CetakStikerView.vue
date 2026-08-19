@@ -30,15 +30,20 @@
             </div>
             <div class="card-body">
               <div class="row g-3">
-                <!-- Pilih Menu -->
-                <div class="col-12">
-                  <label class="form-label fw-semibold">Pilih Menu Makanan</label>
+                <!-- Pilih Menu & Nama Menu -->
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Pilih Menu Makanan (Template)</label>
                   <select class="form-select" v-model="selectedMenuId" @change="onMenuSelect">
-                    <option value="">-- Pilih Menu Makanan (Opsional) --</option>
+                    <option value="">-- Pilih Menu (Opsional) --</option>
                     <option v-for="menu in menuList" :key="menu.id_menu" :value="menu.id_menu">
                       {{ menu.nama_menu }} ({{ menu.kategori || 'Umum' }})
                     </option>
                   </select>
+                </div>
+
+                <div class="col-md-6">
+                  <label class="form-label fw-semibold">Nama Menu (Tampil di Label)</label>
+                  <input type="text" class="form-control" v-model="form.nama_menu" placeholder="Contoh: Nasi Ayam Goreng + Sayur Sop" />
                 </div>
 
                 <!-- Waktu Packing & Baik Dikonsumsi Sebelum -->
@@ -215,6 +220,12 @@
                     </div>
                   </div>
 
+                  <!-- Nama Menu Bar -->
+                  <div class="menu-bar" v-if="form.nama_menu">
+                    <span class="menu-label">MENU:</span>
+                    <span class="menu-val">{{ form.nama_menu }}</span>
+                  </div>
+
                   <!-- Time Grid: Waktu Packing & Baik Dikonsumsi Sebelum (Symmetrical Colons) -->
                   <div class="time-grid">
                     <!-- Row 1: Waktu Packing -->
@@ -376,6 +387,12 @@
                 </div>
               </div>
 
+              <!-- Nama Menu Bar -->
+              <div class="menu-bar" v-if="form.nama_menu">
+                <span class="menu-label">MENU:</span>
+                <span class="menu-val">{{ form.nama_menu }}</span>
+              </div>
+
               <!-- Time Grid: Waktu Packing & Baik Dikonsumsi Sebelum (Symmetrical Colons) -->
               <div class="time-grid">
                 <!-- Row 1: Waktu Packing -->
@@ -526,6 +543,7 @@ export default {
     const today = new Date().toISOString().substr(0, 10)
 
     const form = reactive({
+      nama_menu: 'Nasi Ayam Goreng + Sayur Sop',
       waktu_packing: '06:00',
       waktu_kadaluarsa: '10:00',
       tanggal_produksi: today,
@@ -572,6 +590,9 @@ export default {
       if (!selectedMenuId.value) return
       const found = menuList.value.find(m => m.id_menu === selectedMenuId.value)
       if (found) {
+        if (found.nama_menu) {
+          form.nama_menu = found.nama_menu
+        }
         const energi = found.kalori_per_porsi ? parseFloat(found.kalori_per_porsi) : 0
         const protein = found.protein_gram ? parseFloat(found.protein_gram) : 0
         const lemak = found.lemak_gram ? parseFloat(found.lemak_gram) : 0
@@ -683,6 +704,39 @@ export default {
 .sparkle {
   color: #17a2b8;
   margin-left: 2px;
+}
+
+/* Menu Bar */
+.menu-bar {
+  background-color: #e8f4f8;
+  border: 1.5px solid #004085;
+  border-radius: 6px;
+  padding: 2px 8px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 9pt;
+  font-weight: 800;
+  color: #002b5b;
+}
+.menu-label {
+  color: #004085;
+  font-weight: 900;
+  font-size: 7.5pt;
+  background-color: #d0e7f3;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+.menu-val {
+  color: #0d1b2a;
+  font-weight: 900;
+  font-size: 8.5pt;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Time Grid (Simetris Alignment for Colons) */
@@ -949,6 +1003,9 @@ export default {
     height: 74mm;
   }
   .grid-8 .header-title { font-size: 14pt; }
+  .grid-8 .menu-bar { font-size: 7.5pt; padding: 1px 4px; margin-bottom: 3px; border-width: 1px; }
+  .grid-8 .menu-label { font-size: 6.5pt; padding: 0.5px 4px; }
+  .grid-8 .menu-val { font-size: 7.5pt; }
   .grid-8 .time-label { font-size: 6.5pt; }
   .grid-8 .time-pill { min-width: 85px; padding: 1px 4px; font-size: 7pt; }
   .grid-8 .notice-text { font-size: 5.5pt; }
@@ -973,6 +1030,19 @@ export default {
     padding-bottom: 2px;
     margin-bottom: 2px;
     border-bottom-width: 1px;
+  }
+  .grid-10 .menu-bar {
+    font-size: 6pt;
+    padding: 1px 3px;
+    margin-bottom: 2px;
+    border-width: 1px;
+  }
+  .grid-10 .menu-label {
+    font-size: 5pt;
+    padding: 0.5px 3px;
+  }
+  .grid-10 .menu-val {
+    font-size: 6pt;
   }
   .grid-10 .header-icon-left svg,
   .grid-10 .header-icon-right svg {
